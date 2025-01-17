@@ -22,78 +22,79 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+# NestJS API Starter
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This project is a boilerplate application designed to demonstrate my skills and best practices in building scalable, maintainable, and production-ready APIs using NestJS. It serves two main purposes:
 
-## Project setup
+1. **Portfolio**: To showcase my ability to create professional-grade APIs, incorporating industry best practices and modern tools.
+2. **Starter App**: To act as a foundation for quickly spinning up new APIs.
 
-```bash
-$ pnpm install
-```
+## Features
+- **Swagger Integration**: Automatically generated API documentation with Swagger UI.
+- **Health Check Endpoint**: `/health` endpoint to monitor application health and uptime.
+- **Test Coverage Enforcement**: Jest configured with a minimum coverage threshold of 85% for branches, functions, lines, and statements.
 
-## Compile and run the project
+## Getting Started
 
-```bash
-# development
-$ pnpm run start
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v20 or higher recommended)
+- [Docker](https://www.docker.com/) (optional for Docker setup)
 
-# watch mode
-$ pnpm run start:dev
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/garretdgrant/nestjs-api-starter.git
+   cd nestjs-api-starter
+   ```
 
-# production mode
-$ pnpm run start:prod
-```
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-## Run tests
+3. Set up environment variables:
+   Copy `.env.example` to `.env` and update the variables as needed.
+   ```bash
+   cp .env.example .env
+   ```
 
-```bash
-# unit tests
-$ pnpm run test
+4. Start the application:
+   ```bash
+   pnpm run start:dev
+   ```
 
-# e2e tests
-$ pnpm run test:e2e
+### Running Tests
+Run tests with Jest:
+   ```bash
+   pnpm run test
+   ```
 
-# test coverage
-$ pnpm run test:cov
-```
+Generate a coverage report:
+   ```bash
+   pnpm run test:cov
+   ```
 
-## Deployment
+### Swagger UI
+- Access the interactive Swagger UI at: [http://localhost:8000/api](http://localhost:8000/api)
+- View the OpenAPI schema (JSON format) at: [http://localhost:8000/api-json](http://localhost:8000/api-json)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Health Check
+Check the application's health at:
+- [http://localhost:8000/health](http://localhost:8000/health)
 
-```bash
-$ pnpm install -g mau
-$ mau deploy
-```
+## Future Updates
+The following features are planned for future updates:
+- **CircleCI Configuration**: Add automated builds, tests, and deployments to showcase CI/CD skills.
+- **Local Docker Database**: Provide a `docker-compose.yml` file to spin up a local database (e.g., PostgreSQL or MySQL).
+- **Multistage Dockerfile**: Create an optimized multistage Dockerfile to demonstrate Docker skills.
+- **Advanced Testing**: Add integration tests and mocking for third-party APIs.
+- **Security Enhancements**: Implement middleware for security headers and environment variable validation.
+- **API Versioning**: Introduce API versioning to support multiple versions of the application.
+- **Metrics and Monitoring**: Add tools like New Relic for monitoring and logging.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Contributions
+Contributions are not accepted for this repository, feel free to clone to spin up your own api.
 
 ## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License.
