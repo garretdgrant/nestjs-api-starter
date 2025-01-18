@@ -1,0 +1,16 @@
+version: 2.1
+
+jobs:
+  test-job:
+    docker:
+      - image: cimg/node:20.0  # Updated to use Node.js 20
+    steps:
+      - checkout  # Checks out your code
+      - run:
+          name: Print a message
+          command: echo "Hello, CircleCI with Node.js 20!"
+
+workflows:
+  test-workflow:
+    jobs:
+      - test-job
