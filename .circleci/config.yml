@@ -15,6 +15,7 @@ jobs:
       - checkout
       - restore_cache:
           name: Restore pnpm Cache
+          key: *pnpm-cache-key
       - run:
           name: Install pnpm package manager
           command: sudo npm i pnpm@latest-9 -g
