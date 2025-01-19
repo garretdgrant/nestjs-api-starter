@@ -6,11 +6,11 @@ aliases:
 
 anchors:
   release: &release  # Only run for version tags, dont build branches
-  filters:
-    tags:
-      only: /v.*/
-    branches:
-      ignore: /.*/
+    filters:
+      tags:
+        only: /v.*/
+      branches:
+        ignore: /.*/
 
 executors:
   node-executor:
