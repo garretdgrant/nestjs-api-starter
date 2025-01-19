@@ -51,9 +51,8 @@ jobs:
 workflows:
   pr:  # run on any branch but main
     when:
-      and:
-        - not:
-            matches: { pattern: '^main$', value: << pipeline.git.branch >> }
+      not:
+        matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
       - install-dependencies
       - lint-ts:
