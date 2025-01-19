@@ -1,16 +1,111 @@
 version: 2.1
 
-jobs:
-  test-job:
+# Alias used for caching dependencies. Cache can be cleared by updating vx
+aliases:
+  - &pnpm-cache-key "pnpm-packages-v1-{{ checksum \"pnpm-lock.yaml\" }}"
+
+anchors:
+  release: &release  # Only run for version tags, dont build branches
+    filters:
+      tags:
+        only: /v.*/
+      branches:
+        ignore: /.*/
+
+executors:
+  node-executor:
     docker:
-      - image: cimg/node:20.0  # Updated to use Node.js 20
+      - image: cimg/node:20.11
+jobs:
+  install-dependencies:
+    executor: node-executor
     steps:
-      - checkout  # Checks out your code
+      - checkout
+      - restore_cache:
+          name: Restore pnpm Cache
+          key: *pnpm-cache-key
       - run:
-          name: Print a message
-          command: echo "Hello, CircleCI with Node.js 20!"
+          name: Install pnpm package manager
+          command: sudo npm i pnpm@latest-9 -g
+      - run:
+          name: Install Dependencies from Lockfile
+          command: pnpm install --frozen-lockfile
+      - save_cache:
+          key: *pnpm-cache-key
+          paths:
+            - ~/.npm
+            - ./node_modules
+
+  lint-ts:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore pnpm Cache
+          key: *pnpm-cache-key
+      - run:
+          name: Install pnpm package manager
+          command: sudo npm i pnpm@latest-9 -g
+      - run:
+          name: Install Dependencies (in case of cache miss)
+          command: pnpm install --frozen-lockfile
+      - run:
+          name: Check Formatting with Prettier
+          command: pnpm run format:check
+      - run:
+          name: Run eslint Linter
+          command: pnpm run lint
+
+  jest-coverage:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore pnpm Cache
+          key: *pnpm-cache-key
+      - run:
+          name: Install pnpm package manager
+          command: sudo npm i pnpm@latest-9 -g
+      - run:
+          name: Install Dependencies (in case of cache miss)
+          command: pnpm install --frozen-lockfile
+      - run:
+          name: Run Jest tests with coverage
+          command: pnpm test:cov
+
+  main-job:
+    executor: node-executor
+    steps:
+      - run:
+          name: Example Main Job
+          command: echo 'This job only runs on main workflow'
+
+  release-job:
+    executor: node-executor
+    steps:
+      - run:
+          name: Example Release Job
+          command: echo 'This job only runs on release tags'
 
 workflows:
-  test-workflow:
+  pr:  # run on any branch excluding main
+    when:
+      not:
+        matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
-      - test-job
+      - install-dependencies
+      - lint-ts:
+          requires: [install-dependencies]
+      - jest-coverage:
+          requires: [install-dependencies]
+
+  main:  # run only when there is a commit to main
+    when:
+      matches: { pattern: '^main$', value: << pipeline.git.branch >> }
+    jobs:
+      - main-job
+
+  release:  # run only when there is a github release
+    jobs:
+      - release-job:
+          <<: [*release]
