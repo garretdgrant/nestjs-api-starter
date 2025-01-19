@@ -11,6 +11,6 @@ jobs:
           command: echo "Hello, CircleCI with Node.js 20!"
 
 workflows:
-  test-workflow:
+  workflow:
     jobs:
       - test-job
