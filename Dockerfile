@@ -1,7 +1,7 @@
 # Optimized multistage Dockerfile for building and running a lightweight
 # production-ready Node.js application
 # Stage 1: Build
-FROM node:20 AS builder
+FROM node:20-alpine AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -28,8 +28,8 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 
-# Install only production dependencies
-RUN npm install -g pnpm && pnpm install --prod --frozen-lockfile
+# Install only production dependencies, remove pnpm saves 20 MB on image
+RUN npm install -g pnpm && pnpm install --prod --frozen-lockfile && npm uninstall -g pnpm
 
 # Expose the application port
 EXPOSE 8000
