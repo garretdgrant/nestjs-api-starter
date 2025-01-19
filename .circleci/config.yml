@@ -2,7 +2,7 @@ version: 2.1
 
 # Alias used for caching dependencies. Cache can be cleared by updating vx
 aliases:
-  -&pnpm-cache-key "pnpm-packages-v1-{{ checksum \"pnpm-lock.yaml\" }}"
+  - &pnpm-cache-key "pnpm-packages-v1-{{ checksum \"pnpm-lock.yaml\" }}"
 
 executors:
   node-executor:
