@@ -36,6 +36,9 @@ jobs:
           name: Restore pnpm Cache
           key: *pnpm-cache-key
       - run:
+          name: Install pnpm package manager
+          command: sudo npm i pnpm@latest-9 -g
+      - run:
           name: Install Dependencies (in case of cache miss)
           command: pnpm install --frozen-lockfile
       - run:
