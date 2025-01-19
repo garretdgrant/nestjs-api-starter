@@ -80,23 +80,32 @@ jobs:
           name: Example Main Job
           command: echo 'This job only runs on main workflow'
 
+  release-job:
+    executor: node-executor
+    steps:
+      - run:
+          name: Example Release Job
+          command: echo 'This job only runs on release tags'
+
 workflows:
-  pr:  # run on any branch but main
+  pr:  # run on any branch excluding main
     when:
       not:
         matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
       - install-dependencies
-      - main-job
-      - main-job:
-          <<: [*release]
       - lint-ts:
           requires: [install-dependencies]
       - jest-coverage:
           requires: [install-dependencies]
 
-  main:  # run on any branch but main
+  main:  # run only when there is a commit to main
     when:
       matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
       - main-job
+
+  release:  # run only when there is a github release
+    jobs:
+      - release-job:
+          <<: [*release]
