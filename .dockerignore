@@ -16,6 +16,9 @@
 # Include the compiled application (output of the build process)
 !dist/
 
+# Include source so the build step can emit dist on platforms like Railway
+!src/
+
 # Include the dependencies for runtime
 !node_modules/
 
@@ -26,3 +29,6 @@
 # Include the TypeScript configuration file if needed during runtime
 !tsconfig.json
 
+# Nest build config
+!tsconfig.build.json
+!nest-cli.json
