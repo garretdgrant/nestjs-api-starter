@@ -1,4 +1,5 @@
 # backend-plan.md
+
 MVP Backend Plan – EDC Client Portal (NestJS API + Postgres)
 
 Goal: Build a small but solid NestJS backend that powers the client dashboard
@@ -10,6 +11,7 @@ MVP:
 - You (admin) can view/update everything
 
 Stack:
+
 - NestJS (existing starter)
 - Postgres (Supabase recommended)
 - Prisma (ORM)
@@ -83,7 +85,7 @@ endpoint that returns { status: 'ok' }.”
    - clientId (FK -> Client)
    - planId (FK -> Plan)
    - status (enum: 'active' | 'paused' | 'canceled') - billingProvider (enum:
-   'manual' | 'stripe')
+     'manual' | 'stripe')
    - billingExternalId (nullable, for Stripe subscription ID etc.)
    - startDate
    - renewsAt (nullable)
@@ -96,7 +98,7 @@ endpoint that returns { status: 'ok' }.”
    - title
    - description
    - status (enum: 'new' | 'in_progress' | 'completed' | 'rejected') - priority
-   (enum: 'low' | 'normal' | 'high')
+     (enum: 'low' | 'normal' | 'high')
    - createdAt, updatedAt
 
 5. Run migrations:
@@ -283,7 +285,7 @@ clients as an admin.”
 
 2. Enable global validation:
    - In `main.ts`, set up `app.useGlobalPipes(new ValidationPipe({ whitelist:
-     true, forbidNonWhitelisted: true }))`.
+true, forbidNonWhitelisted: true }))`.
 
 3. Return structured error messages (Nest default HttpException is fine for
    MVP).
@@ -329,6 +331,7 @@ You can skip this for speed if you want, but it’s nice to have.
    - Run login and `/me` calls from Postman or curl.
 
 Optionally:
+
 - Set a custom domain like `api.edcwebdesign.com`.
 
 Prompt for Codex: “Modify main.ts so the Nest app listens on process.env.PORT or
@@ -362,17 +365,17 @@ You can call backend MVP complete when:
 - [ ] NestJS app boots locally with ConfigModule and health endpoint.
 - [ ] Supabase Postgres created and `DATABASE_URL` is set.
 - [ ] Prisma schema defined (User, Client, Plan, Subscription, Request) and
-  migrations applied.
+      migrations applied.
 - [ ] Auth module with JWT login works (valid user gets token).
 - [ ] `/me` endpoint returns user, client, and subscriptions.
 - [ ] Client can list and create requests (`/requests`, `/requests/:id`, `POST
-  /requests`).
+/requests`).
 - [ ] Admin endpoints work to view clients and requests and update request
-  status.
+      status.
 - [ ] Plan records are seeded and can be associated with subscriptions.
 - [ ] API deployed on Railway/Render, reachable over HTTPS.
 - [ ] You can manually create a client user, log in as them, and see a realistic
-  dashboard payload.
+      dashboard payload.
 
 Once this is done, your backend will be ready for you to build the Next.js
 dashboard UI on top and start showing clients a legit “portal” experience.

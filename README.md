@@ -33,6 +33,7 @@ using NestJS. It serves two main purposes:
 2. **Starter App**: To act as a foundation for quickly spinning up new APIs.
 
 ## Features
+
 - **Swagger Integration**: Automatically generated API documentation with
   Swagger UI.
 - **Health Check Endpoint**: `/health` endpoint to monitor application health
@@ -47,24 +48,29 @@ using NestJS. It serves two main purposes:
 ## Getting Started
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) (v20 or higher recommended)
 - [Docker](https://www.docker.com/) (optional for Docker setup)
 - [Just Task Runner](https://www.npmjs.com/package/just-task) (optional for simplifying commands)
 
 ### Installation
+
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/garretdgrant/nestjs-api-starter.git
    cd nestjs-api-starter
    ```
 
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Set up environment variables: Copy `.env.example` to `.env` and update the
    variables as needed.
+
    ```bash
    cp .env.example .env
    ```
@@ -75,16 +81,20 @@ using NestJS. It serves two main purposes:
    ```
 
 ### Running with Docker
+
 You can run the application using Docker, either with the `just` command or
 manually.
 
 #### Option 1: Using `just`
+
 If you have the `just` task runner installed, use the following commands:
 
 - **Build and run the container**:
+
   ```bash
   just build-and-run
   ```
+
   This builds the Docker image and starts the container on port `8000`.
 
 - **Stop and remove the running container**:
@@ -94,9 +104,11 @@ If you have the `just` task runner installed, use the following commands:
   This stops and removes any containers started by the `build-and-run` command.
 
 #### Option 2: Using Docker Commands
+
 If you don’t have `just`, you can build and run the container manually:
 
 - **Build and run the container**:
+
   ```bash
   docker build -t nestjs-api-starter .
   docker run -d -p 8000:8000 nestjs-api-starter
@@ -109,28 +121,36 @@ If you don’t have `just`, you can build and run the container manually:
   ```
 
 ### Running Tests
+
 Run tests with Jest:
-   ```bash
-   pnpm run test
-   ```
+
+```bash
+pnpm run test
+```
 
 Generate a coverage report:
-   ```bash
-   pnpm run test:cov
-   ```
+
+```bash
+pnpm run test:cov
+```
 
 ### Swagger UI
+
 - Access the interactive Swagger UI at:
   [http://localhost:8000/api](http://localhost:8000/api)
 - View the OpenAPI schema (JSON format) at:
   [http://localhost:8000/api-json](http://localhost:8000/api-json)
 
 ### Health Check
+
 Check the application's health at:
+
 - [http://localhost:8000/health](http://localhost:8000/health)
 
 ## Future Updates
+
 The following features are planned for future updates:
+
 - **CircleCI Configuration**: Add automated builds, tests, and deployments to
   showcase CI/CD skills.
 - **Local Docker Database**: Provide a `docker-compose.yml` file to spin up a
@@ -144,8 +164,10 @@ The following features are planned for future updates:
   logging.
 
 ## Contributions
+
 Contributions are not accepted for this repository, feel free to clone to spin
 up your own API.
 
 ## License
+
 This project is licensed under the MIT License.

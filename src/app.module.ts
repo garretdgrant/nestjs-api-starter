@@ -9,9 +9,12 @@ import { ApiKeyGuard } from './auth/api-key.gaurd';
 @Module({
   imports: [HealthModule, ConfigModule.forRoot({ isGlobal: true })],
   controllers: [AppController],
-  providers: [AppService, {
-    provide: APP_GUARD,
-    useClass: ApiKeyGuard
-  }],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
+  ],
 })
 export class AppModule {}

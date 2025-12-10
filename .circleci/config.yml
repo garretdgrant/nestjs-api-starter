@@ -2,10 +2,10 @@ version: 2.1
 
 # Alias used for caching dependencies. Cache can be cleared by updating vx
 aliases:
-  - &pnpm-cache-key "pnpm-packages-v1-{{ checksum \"pnpm-lock.yaml\" }}"
+  - &pnpm-cache-key 'pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}'
 
 anchors:
-  release: &release  # Only run for version tags, dont build branches
+  release: &release # Only run for version tags, dont build branches
     filters:
       tags:
         only: /v.*/
@@ -88,7 +88,7 @@ jobs:
           command: echo 'This job only runs on release tags'
 
 workflows:
-  pr:  # run on any branch excluding main
+  pr: # run on any branch excluding main
     when:
       not:
         matches: { pattern: '^main$', value: << pipeline.git.branch >> }
@@ -99,13 +99,13 @@ workflows:
       - jest-coverage:
           requires: [install-dependencies]
 
-  main:  # run only when there is a commit to main
+  main: # run only when there is a commit to main
     when:
       matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
       - main-job
 
-  release:  # run only when there is a github release
+  release: # run only when there is a github release
     jobs:
       - release-job:
           <<: [*release]
