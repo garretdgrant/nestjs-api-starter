@@ -18,4 +18,15 @@ export class HealthController {
   getHealth(): HealthCheckResponseDto {
     return this.healthService.getHealth();
   }
+
+  @Get('db')
+  @ApiOperation({ summary: 'Check database connectivity' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Database reachable',
+    type: HealthCheckResponseDto,
+  })
+  async getDbHealth(): Promise<HealthCheckResponseDto> {
+    return this.healthService.getDbHealth();
+  }
 }

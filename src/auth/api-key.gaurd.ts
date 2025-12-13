@@ -32,7 +32,7 @@ export class ApiKeyGuard implements CanActivate {
       url.startsWith('/swagger') ||
       url.startsWith('/swagger-json') ||
       url === '/' ||
-      url.startsWith('/health')
+      url === '/health'
     ) {
       return true;
     }
