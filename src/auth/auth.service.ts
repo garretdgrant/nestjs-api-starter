@@ -57,6 +57,7 @@ export class AuthService {
 
   private stripSensitive(user: User): Omit<User, 'hashedPassword'> {
     const { hashedPassword, ...safeUser } = user;
+    void hashedPassword; // explicitly acknowledge omit
     return safeUser;
   }
 }

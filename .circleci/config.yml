@@ -15,7 +15,7 @@ anchors:
 executors:
   node-executor:
     docker:
-      - image: cimg/node:20.11
+      - image: cimg/node:24.12
 jobs:
   install-dependencies:
     executor: node-executor
@@ -26,10 +26,13 @@ jobs:
           key: *pnpm-cache-key
       - run:
           name: Install pnpm package manager
-          command: sudo npm i pnpm@latest-9 -g
+          command: sudo npm i pnpm@latest-10 -g
       - run:
           name: Install Dependencies from Lockfile
           command: pnpm install --frozen-lockfile
+      - run:
+          name: Generate Prisma Client
+          command: ENVIRONMENT=dev LOCAL_DATABASE_URL='dummy' pnpm prisma:generate
       - save_cache:
           key: *pnpm-cache-key
           paths:
@@ -45,7 +48,7 @@ jobs:
           key: *pnpm-cache-key
       - run:
           name: Install pnpm package manager
-          command: sudo npm i pnpm@latest-9 -g
+          command: sudo npm i pnpm@latest-10 -g
       - run:
           name: Install Dependencies (in case of cache miss)
           command: pnpm install --frozen-lockfile
@@ -53,11 +56,17 @@ jobs:
           name: Check Formatting with Prettier
           command: pnpm run format:check
       - run:
+          name: Generate Prisma Client
+          command: ENVIRONMENT=dev LOCAL_DATABASE_URL='dummy' pnpm prisma:generate
+      - run:
           name: Run eslint Linter
           command: pnpm run lint
 
   jest-coverage:
     executor: node-executor
+    environment:
+      JWT_SECRET: 'jwt-secret'
+      LOCAL_DATABASE_URL: 'someurl'
     steps:
       - checkout
       - restore_cache:
@@ -65,16 +74,22 @@ jobs:
           key: *pnpm-cache-key
       - run:
           name: Install pnpm package manager
-          command: sudo npm i pnpm@latest-9 -g
+          command: sudo npm i pnpm@latest-10 -g
       - run:
           name: Install Dependencies (in case of cache miss)
           command: pnpm install --frozen-lockfile
+      - run:
+          name: Generate Prisma Client
+          command: ENVIRONMENT=dev LOCAL_DATABASE_URL='dummy' pnpm prisma:generate
       - run:
           name: Run Jest tests with coverage
           command: pnpm test:cov
 
   main-job:
     executor: node-executor
+    environment:
+      ENVIRONMENT: dev
+      LOCAL_DATABASE_URL: postgresql://postgres:devpassword@localhost:5432/edc_portal
     steps:
       - run:
           name: Example Main Job
@@ -82,6 +97,9 @@ jobs:
 
   release-job:
     executor: node-executor
+    environment:
+      ENVIRONMENT: dev
+      LOCAL_DATABASE_URL: postgresql://postgres:devpassword@localhost:5432/edc_portal
     steps:
       - run:
           name: Example Release Job

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { Role, User, Prisma } from '@generated/prisma/client';
@@ -38,7 +38,7 @@ export class UsersService {
   async createClientUser(
     data: CreateClientUserDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    const role = data.role ?? Role.ADMIN;
+    const role = Role.USER;
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await this.prisma.user.create({

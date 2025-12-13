@@ -5,13 +5,16 @@
   "description": "",
   "license": "UNLICENSED",
   "author": "",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "build": "pnpm run prisma:generate && nest build",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:write": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "prettier": "prettier --write .",
-    "prisma:generate": "pnpx prisma generate",
+    "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "ENVIRONMENT=dev pnpx prisma migrate dev",
     "prisma:studio": "ENVIRONMENT=dev pnpx prisma studio",
     "prisma:migrate:prod": "ENVIRONMENT=prod pnpx prisma migrate deploy",
@@ -26,7 +29,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "run:ci": "pnpm run format:write && pnpm run lint && pnpm run prisma:generate && pnpm run test:cov"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",

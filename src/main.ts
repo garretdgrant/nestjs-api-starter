@@ -50,7 +50,14 @@ export async function bootstrap() {
   );
   const port = process.env.PORT ?? 8000;
   await app.listen(port);
-  logger.log(`🚀 Application is running on http://localhost:${port}`);
+  const env = process.env.ENVIRONMENT ?? 'dev';
+  const baseUrl =
+    env === 'prod'
+      ? 'https://edc-web-backend-production.up.railway.app'
+      : env === 'stag'
+        ? 'https://edc-web-backend-staging.up.railway.app'
+        : `http://localhost:${port}`;
+  logger.log(`🚀 Application is running on ${baseUrl}`);
 }
 
 bootstrap();

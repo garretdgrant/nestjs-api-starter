@@ -18,7 +18,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
     const request = context.switchToHttp().getRequest();
-    if (request?.path?.startsWith('/swagger') || request?.path === '/auth/login') {
+    if (
+      request?.path?.startsWith('/swagger') ||
+      request?.path === '/auth/login'
+    ) {
       return true;
     }
     return super.canActivate(context);
