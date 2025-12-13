@@ -7,7 +7,88 @@ datasource db {
   provider = "postgresql"
 }
 
-model test_items {
-  id   Int     @id @default(autoincrement())
-  name String?
+enum Role {
+  USER
+  ADMIN
+}
+
+// --- Agency Staff Role (Internal Role) ---
+enum StaffRole {
+  SUPER_ADMIN // Only you (and future internal staff) use this
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+// --- Client/Company Model ---
+model Client {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // ONE Client can have MANY Users (Client Users)
+  users     User[]
+
+  // ONE Client can have MANY Projects
+  projects  Project[]
+}
+
+// --- User Model (Handles Both Staff and Client Users) ---
+model User {
+  id                String     @id @default(uuid())
+  email             String     @unique
+  name              String?
+  role              Role       @default(USER)
+
+  // 1. AGENCY STAFF LOGIC (Your Admin View)
+  staffRole         StaffRole?
+
+  // 2. CLIENT USER LOGIC (Client's View)
+  // MANY Users can belong to ONE Client
+  clientId          String? // Foreign Key (Must be String to match Client.id)
+  client            Client?    @relation(fields: [clientId], references: [id])
+
+  // Auth fields
+  hashedPassword    String
+  passwordUpdatedAt DateTime  @default(now())
+  isEmailVerified   Boolean   @default(false)
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  refreshTokens     RefreshToken[]
+
+  @@index([clientId])
+}
+
+// --- Project Model ---
+model Project {
+  id          String         @id @default(uuid())
+  name        String
+  status      ProjectStatus  @default(ACTIVE)
+  description String         @default("Website")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Foreign Key linking the Project to a Client
+  clientId    String
+  client      Client         @relation(fields: [clientId], references: [id])
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  tokenHash    String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  fingerprint  String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
 }
