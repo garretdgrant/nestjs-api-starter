@@ -44,11 +44,8 @@ export async function bootstrap() {
   );
   await createSwagger(app);
   logger.log(`ENVIRONMENT=${process.env.ENVIRONMENT ?? 'undefined'}`);
-  logger.log(`DATABASE_URL=${process.env.DATABASE_URL ?? 'undefined'}`);
-  logger.log(
-    `LOCAL_DATABASE_URL=${process.env.LOCAL_DATABASE_URL ?? 'undefined'}`,
-  );
-  const port = process.env.PORT ?? 8000;
+  const port: number = Number(process.env.PORT) ?? 8000;
+  logger.log(`PORT: ${port}`);
   await app.listen(port);
   const env = process.env.ENVIRONMENT ?? 'dev';
   const baseUrl =

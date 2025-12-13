@@ -25,7 +25,15 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    if (request?.path?.startsWith('/swagger')) {
+    const url: string =
+      request?.originalUrl ?? request?.url ?? request?.path ?? '';
+
+    if (
+      url.startsWith('/swagger') ||
+      url.startsWith('/swagger-json') ||
+      url === '/' ||
+      url.startsWith('/health')
+    ) {
       return true;
     }
 
