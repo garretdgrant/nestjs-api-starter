@@ -111,7 +111,9 @@ describe('UsersService', () => {
       clientId: baseUser.clientId,
       role: Role.USER,
     });
-    expect((result as unknown as { hashedPassword?: string }).hashedPassword).toBeUndefined();
+    expect(
+      (result as unknown as { hashedPassword?: string }).hashedPassword,
+    ).toBeUndefined();
   });
 
   it('updates a user', async () => {

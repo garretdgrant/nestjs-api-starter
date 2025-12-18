@@ -33,4 +33,3 @@ describe('ClientSignupDto validation', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 });
-

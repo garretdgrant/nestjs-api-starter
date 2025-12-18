@@ -104,7 +104,11 @@ describe('AuthService', () => {
       accessToken: 'signed-jwt',
       client: { id: 'client-id', name: 'Acme Co' },
       project: { id: 'project-id', clientId: 'client-id', name: 'Website' },
-      user: { id: 'user-id', email: 'alice@example.com', clientId: 'client-id' },
+      user: {
+        id: 'user-id',
+        email: 'alice@example.com',
+        clientId: 'client-id',
+      },
     });
     expect(
       (result.user as unknown as { hashedPassword?: string }).hashedPassword,

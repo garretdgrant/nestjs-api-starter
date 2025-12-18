@@ -23,4 +23,3 @@ describe('LoginDto validation', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 });
-

@@ -35,9 +35,7 @@ export class AuthController {
     description:
       'Create a client account with an initial user and project (atomic).',
   })
-  clientSignup(
-    @Body() dto: ClientSignupDto,
-  ): Promise<{
+  clientSignup(@Body() dto: ClientSignupDto): Promise<{
     accessToken: string;
     user: SafeUser;
     client: SafeClient;

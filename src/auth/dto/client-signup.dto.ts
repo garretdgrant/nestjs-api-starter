@@ -10,9 +10,7 @@ export class ClientSignupDto {
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   contactName!: string;
 
   @ApiProperty({
@@ -22,9 +20,7 @@ export class ClientSignupDto {
   @IsString()
   @MinLength(2)
   @MaxLength(120)
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   companyName!: string;
 
   @ApiProperty({
@@ -54,8 +50,6 @@ export class ClientSignupDto {
   @IsString()
   @MinLength(2)
   @MaxLength(120)
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   projectName!: string;
 }

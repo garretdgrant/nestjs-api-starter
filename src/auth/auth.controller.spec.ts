@@ -39,7 +39,11 @@ describe('AuthController', () => {
   it('delegates clientSignup to service', async () => {
     const user = { id: 'u1', email: 'a@a.com' } as SafeUser;
     const client = { id: 'c1', name: 'Acme' } as SafeClient;
-    const project = { id: 'p1', name: 'Website', clientId: 'c1' } as SafeProject;
+    const project = {
+      id: 'p1',
+      name: 'Website',
+      clientId: 'c1',
+    } as SafeProject;
     authServiceMock.clientSignup = jest.fn().mockResolvedValue({
       accessToken: 'token',
       user,
@@ -65,4 +69,3 @@ describe('AuthController', () => {
     expect(result).toEqual(user);
   });
 });
-
