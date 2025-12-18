@@ -1,4 +1,4 @@
-import { User } from '@generated/prisma/client';
+import { Client, Project, User } from '@generated/prisma/client';
 
 export interface JwtPayload {
   sub: string;
@@ -8,6 +8,8 @@ export interface JwtPayload {
 }
 
 export type SafeUser = Omit<User, 'hashedPassword'>;
+export type SafeClient = Client;
+export type SafeProject = Project;
 
 export function toSafeUser(user: User): SafeUser {
   const { hashedPassword, ...safeUser } = user;

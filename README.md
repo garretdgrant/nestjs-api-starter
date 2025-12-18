@@ -38,6 +38,8 @@ using NestJS. It serves two main purposes:
   Swagger UI.
 - **Health Check Endpoint**: `/health` endpoint to monitor application health
   and uptime.
+- **Client Signup Flow**: `POST /auth/client-signup` creates Client + User +
+  Project atomically and returns a JWT for immediate login.
 - **Test Coverage Enforcement**: Jest configured with a minimum coverage
   threshold of 85% for branches, functions, lines, and statements.
 - **Multistage Docker Image**: Efficient Dockerfile design to optimize build and
@@ -140,6 +142,35 @@ pnpm run test:cov
   [http://localhost:8000/api](http://localhost:8000/api)
 - View the OpenAPI schema (JSON format) at:
   [http://localhost:8000/api-json](http://localhost:8000/api-json)
+
+### Auth: Client Signup (MVP)
+
+- **Endpoint**: `POST /auth/client-signup` (public)
+- **Purpose**: Atomically create a Client, a client User, and an initial Project,
+  then return a JWT for immediate login.
+- **Request body**:
+  ```json
+  {
+    "contactName": "Alice Doe",
+    "companyName": "Acme Co",
+    "email": "alice@example.com",
+    "password": "supersecret",
+    "projectName": "Website"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "accessToken": "<jwt>",
+    "user": { "id": "...", "email": "...", "role": "USER", "clientId": "..." },
+    "client": { "id": "...", "name": "Acme Co" },
+    "project": { "id": "...", "clientId": "...", "name": "Website" }
+  }
+  ```
+- Validation: trims input, lowercases email, enforces lengths (email valid,
+  password 8–72 chars, names 1–120 chars).
+- Errors: `409 Email already in use`, `409 Company name already in use`, or
+  validation errors per field.
 
 ### Health Check
 

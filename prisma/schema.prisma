@@ -26,7 +26,7 @@ enum ProjectStatus {
 // --- Client/Company Model ---
 model Client {
   id        String    @id @default(uuid())
-  name      String    @unique
+  name      String    @unique  // name here is the companies name
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
