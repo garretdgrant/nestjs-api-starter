@@ -5,7 +5,9 @@ import { defineConfig, env } from 'prisma/config';
 
 const environment = env('ENVIRONMENT') ?? env('NODE_ENV') ?? 'dev';
 const dbUrl =
-  environment === 'prod' || environment === 'stag' ? env('DATABASE_URL') : 'postgresql://postgres:devpassword@localhost:5432/edc_portal'
+  environment === 'prod' || environment === 'stag'
+    ? env('DATABASE_URL')
+    : 'postgresql://postgres:devpassword@localhost:5432/edc_portal';
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

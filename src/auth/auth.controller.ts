@@ -6,12 +6,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { User } from '@generated/prisma/client';
+import { ApiBody, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt.guard';
 import { Public } from './public.decorator';
+import { SafeUser } from './auth.types';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -23,14 +23,14 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   login(
     @Body() dto: LoginDto,
-  ): Promise<{ accessToken: string; user: Omit<User, 'hashedPassword'> }> {
+  ): Promise<{ accessToken: string; user: SafeUser }> {
     return this.authService.login(dto);
   }
 
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT')
+  @ApiSecurity({ ApiKey: [], JWT: [] })
   @Get('me')
-  me(@Request() req: { user: unknown }): unknown {
+  me(@Request() req: { user: SafeUser }): SafeUser {
     return req.user;
   }
 }

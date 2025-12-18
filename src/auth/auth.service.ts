@@ -1,16 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { User } from '@generated/prisma/client';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
-
-export interface JwtPayload {
-  sub: string;
-  email: string;
-  role: string;
-  clientId: string | null;
-}
+import { JwtPayload, SafeUser, toSafeUser } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +14,7 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<{
     accessToken: string;
-    user: Omit<User, 'hashedPassword'>;
+    user: SafeUser;
   }> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -51,13 +44,7 @@ export class AuthService {
 
     return {
       accessToken,
-      user: this.stripSensitive(user),
+      user: toSafeUser(user),
     };
-  }
-
-  private stripSensitive(user: User): Omit<User, 'hashedPassword'> {
-    const { hashedPassword, ...safeUser } = user;
-    void hashedPassword; // explicitly acknowledge omit
-    return safeUser;
   }
 }
