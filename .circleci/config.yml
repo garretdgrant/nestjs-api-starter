@@ -93,7 +93,7 @@ jobs:
           command: sudo npm i -g @railway/cli
       - run:
           name: Redeploy Railway Staging
-          command: RAILWAY_TOKEN=$RAILWAY_TOKEN_STAG railway redeploy --service $RAILWAY_SERVICE_NAME
+          command: RAILWAY_TOKEN=$RAILWAY_TOKEN_STAG railway redeploy --service $RAILWAY_SERVICE_NAME -y
 
   build_and_push_image:
     parameters:
