@@ -1,7 +1,7 @@
 # Optimized multistage Dockerfile for building and running a lightweight
 # production-ready Node.js application
 # Stage 1: Build
-FROM node:24 AS builder
+FROM node:24-alpine AS builder
 
 # Build-time defaults (placeholder values) to satisfy prisma.config.ts
 ARG ENVIRONMENT=dev
