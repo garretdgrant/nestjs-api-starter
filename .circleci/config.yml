@@ -90,7 +90,7 @@ jobs:
     steps:
       - run:
           name: Install railway cli
-          command: npm i -g @railway/cli
+          command: sudo npm i -g @railway/cli
       - run:
           name: Redeploy Railway
           command: |
