@@ -10,6 +10,7 @@ describe('ClientSignupDto validation', () => {
       email: ' Alice@Example.com ',
       password: 'supersecret',
       projectName: ' Website ',
+      signUpSecret: 'signup-secret-123',
     });
 
     const errors = await validate(dto);
@@ -27,6 +28,7 @@ describe('ClientSignupDto validation', () => {
       email: 'not-an-email',
       password: 'short',
       projectName: 'P',
+      signUpSecret: 'short',
     });
 
     const errors = await validate(dto);

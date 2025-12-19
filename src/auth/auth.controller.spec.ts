@@ -57,6 +57,7 @@ describe('AuthController', () => {
       email: 'a@a.com',
       password: 'p',
       projectName: 'Website',
+      signUpSecret: 'test-secret',
     });
 
     expect(authServiceMock.clientSignup).toHaveBeenCalled();

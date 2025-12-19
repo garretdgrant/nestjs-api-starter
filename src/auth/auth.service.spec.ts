@@ -32,6 +32,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    configMock.get = jest.fn().mockReturnValue('test-secret');
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -50,6 +51,7 @@ describe('AuthService', () => {
     email: ' Alice@Example.com ',
     password: 'supersecret',
     projectName: ' Website ',
+    signUpSecret: 'test-secret',
   });
 
   it('creates client, user, and project atomically and returns sanitized data', async () => {
@@ -119,6 +121,14 @@ describe('AuthService', () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({ id: 'existing' });
     await expect(service.clientSignup(buildDto())).rejects.toBeInstanceOf(
       ConflictException,
+    );
+  });
+
+  it('rejects when signup secret is missing or invalid', async () => {
+    configMock.get = jest.fn().mockReturnValue('expected-secret');
+    const dto = { ...buildDto(), signUpSecret: 'wrong' };
+    await expect(service.clientSignup(dto)).rejects.toThrow(
+      'Invalid signup secret',
     );
   });
 

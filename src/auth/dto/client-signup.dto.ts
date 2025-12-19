@@ -52,4 +52,12 @@ export class ClientSignupDto {
   @MaxLength(120)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   projectName!: string;
+
+  @ApiProperty({
+    description: 'Shared secret required to allow signup',
+    example: 'signup-secret-123',
+  })
+  @IsString()
+  @MinLength(8)
+  signUpSecret!: string;
 }

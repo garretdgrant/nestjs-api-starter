@@ -9,6 +9,7 @@ import { Prisma, Role } from '@generated/prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import {
   JwtPayload,
   SafeClient,
@@ -25,6 +26,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(dto: LoginDto): Promise<{
@@ -69,6 +71,11 @@ export class AuthService {
     project: SafeProject;
     accessToken: string;
   }> {
+    const expectedSecret = this.configService.get<string>('SIGN_UP_SECRET');
+    if (!expectedSecret || dto.signUpSecret !== expectedSecret) {
+      throw new UnauthorizedException('Invalid signup secret');
+    }
+
     const normalizedEmail = dto.email.trim().toLowerCase();
     const trimmedCompany = dto.companyName.trim();
 
