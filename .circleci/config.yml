@@ -85,18 +85,20 @@ jobs:
           name: Run Jest tests with coverage
           command: pnpm test:cov
 
-  docker-build:
+  railway-redeploy-stag:
     executor: node-executor
     steps:
-      - checkout
-      - setup_remote_docker
       - run:
-          name: Build Docker image (placeholder DB URL for prisma generate)
+          name: Install railway cli
+          command: npm i -g @railway/cli
+      - run:
+          name: Redeploy Railway
           command: |
-            docker build \
-              --build-arg ENVIRONMENT=dev \
-              --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
-              -t edcw-backend:ci .
+            railway redeploy \
+              --service $RAILWAY_SERVICE_ID \
+              --environment $RAILWAY_STAGING_ENV_ID \
+              -y
+
   build_and_push_image:
     parameters:
       tag:
@@ -108,7 +110,6 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-
       - run:
           name: Docker login
           command: |
@@ -127,6 +128,7 @@ jobs:
               -t "$IMAGE_NAME:<< parameters.tag >>" \
               --push \
               .
+
 
   release-job:
     executor: node-executor
@@ -152,6 +154,9 @@ workflows:
       - build_and_push_image:
           tag: pr
           requires: [install-dependencies]
+      - railway-redeploy-stag:
+          requires: [build_and_push_image]
+
       # - docker-build:
       #     requires: [install-dependencies]
 
