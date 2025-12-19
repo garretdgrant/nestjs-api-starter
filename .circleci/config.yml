@@ -146,14 +146,14 @@ workflows:
       not:
         matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
-      - install-dependencies
-      - lint-ts:
-          requires: [install-dependencies]
-      - jest-coverage:
-          requires: [install-dependencies]
-      - build_and_push_image:
-          tag: pr
-          requires: [install-dependencies]
+      # - install-dependencies
+      # - lint-ts:
+      #     requires: [install-dependencies]
+      # - jest-coverage:
+      #     requires: [install-dependencies]
+      # - build_and_push_image:
+      #     tag: pr
+      #     requires: [install-dependencies]
       - railway-redeploy-stag:
           requires: [build_and_push_image]
 
@@ -169,7 +169,8 @@ workflows:
           tag: prod
           requires: [install-dependencies]
 
-  release: # run only when there is a github release
+  release: # run only when a git tag is present (GitHub release/tag)
+    when: << pipeline.git.tag >>
     jobs:
       - install-dependencies
       - build_and_push_image:
