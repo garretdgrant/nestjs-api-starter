@@ -154,8 +154,7 @@ workflows:
       # - build_and_push_image:
       #     tag: pr
       #     requires: [install-dependencies]
-      - railway-redeploy-stag:
-          requires: [build_and_push_image]
+      - railway-redeploy-stag
 
       # - docker-build:
       #     requires: [install-dependencies]
