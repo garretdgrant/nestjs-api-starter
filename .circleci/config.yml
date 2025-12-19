@@ -128,16 +128,6 @@ jobs:
               --push \
               .
 
-  main-job:
-    executor: node-executor
-    environment:
-      ENVIRONMENT: dev
-      LOCAL_DATABASE_URL: postgresql://postgres:devpassword@localhost:5432/edc_portal
-    steps:
-      - run:
-          name: Example Main Job
-          command: echo 'This job only runs on main workflow'
-
   release-job:
     executor: node-executor
     environment:
@@ -169,9 +159,14 @@ workflows:
     when:
       matches: { pattern: '^main$', value: << pipeline.git.branch >> }
     jobs:
-      - main-job
+      - install-dependencies
+      - build_and_push_image:
+          tag: prod
+          requires: [install-dependencies]
 
   release: # run only when there is a github release
     jobs:
-      - release-job:
-          <<: [*release]
+      - install-dependencies
+      - build_and_push_image:
+          tag: prod
+          requires: [install-dependencies]
