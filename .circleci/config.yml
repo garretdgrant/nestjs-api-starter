@@ -113,20 +113,20 @@ jobs:
           name: Docker login
           command: |
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-      # - run:
-      #     name: Enable buildx container driver
-      #     command: |
-      #       docker buildx create --use --name multiarch || docker buildx use multiarch
-      # - run:
-      #     name: Build & push image
-      #     command: |
-      #       docker buildx build \
-      #         --build-arg ENVIRONMENT=dev \
-      #         --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
-      #         --platform linux/amd64,linux/arm64 \
-      #         -t "$IMAGE_NAME:<< parameters.tag >>" \
-      #         --output=type=cacheonly \
-      #         .
+      - run:
+          name: Enable buildx container driver
+          command: |
+            docker buildx create --use --name multiarch || docker buildx use multiarch
+      - run:
+          name: Build & push image
+          command: |
+            docker buildx build \
+              --build-arg ENVIRONMENT=dev \
+              --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
+              --platform linux/amd64,linux/arm64 \
+              -t "$IMAGE_NAME:<< parameters.tag >>" \
+              --push \
+              .
 
   main-job:
     executor: node-executor
