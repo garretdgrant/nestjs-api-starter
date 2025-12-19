@@ -97,6 +97,33 @@ jobs:
               --build-arg ENVIRONMENT=dev \
               --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
               -t edcw-backend:ci .
+  build_and_push_image:
+    parameters:
+      tag:
+        type: string
+    docker:
+      - image: cimg/base:stable
+    environment:
+      IMAGE_NAME: ggrant92/edcw-backend
+    steps:
+      - checkout
+      - setup_remote_docker
+
+      # - run:
+      #     name: Docker login
+      #     command: |
+      #       echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+      - run:
+          name: Build & push image
+          command: |
+            docker buildx build \
+              --build-arg ENVIRONMENT=dev \
+              --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
+              --platform linux/amd64,linux/arm64 \
+              -t "$IMAGE_NAME:<< parameters.tag >>" \
+              --output=type=cacheonly \
+              .
 
   main-job:
     executor: node-executor
@@ -129,8 +156,11 @@ workflows:
           requires: [install-dependencies]
       - jest-coverage:
           requires: [install-dependencies]
-      - docker-build:
+      - build_and_push_image:
+          tag: pr
           requires: [install-dependencies]
+      # - docker-build:
+      #     requires: [install-dependencies]
 
   main: # run only when there is a commit to main
     when:
