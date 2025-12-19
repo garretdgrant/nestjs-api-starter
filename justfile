@@ -2,10 +2,15 @@
 # Dependencies: just task runner https://www.npmjs.com/package/just-task
 # run a just command with `just <COMMAND>`
 
-# Build and run the image on port 8000
+# Build and run the image on port 8000 with placeholder build args (override manually if needed)
 build-and-run:
-    docker build -t nestjs-api-starter . && \
-    docker run -d -p 8000:8000 nestjs-api-starter
+    docker build \
+        --build-arg ENVIRONMENT=dev \
+        --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
+        -t nestjs-api-starter . && \
+    docker run -d -p 8000:8000 \
+        --env-file .env \
+        nestjs-api-starter
 
 # Tears down and removes the running container from build-and-run
 teardown:

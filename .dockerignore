@@ -1,0 +1,33 @@
+#
+# Inverted dockerignore: ignore everything, then explicitly allow what the build needs.
+#
+
+# Ignore everything by default
+**
+
+# Allow build/descriptors
+!.dockerignore
+!Dockerfile
+!Dockerfile.ignore
+!package.json
+!pnpm-lock.yaml
+!tsconfig.json
+!tsconfig.build.json
+!nest-cli.json
+!jest.config.ts
+!prisma.config.ts
+!eslint.config.js
+!justfile
+!README.md
+!LICENSE
+!.nvmrc
+!.npmrc
+
+# Allow source and config
+!src/**
+!prisma/**
+!docs/**
+!test/**
+!generated/prisma/**
+
+# Allow env template but not secrets

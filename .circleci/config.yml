@@ -85,6 +85,20 @@ jobs:
           name: Run Jest tests with coverage
           command: pnpm test:cov
 
+  docker-build:
+    executor: node-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.18
+      - run:
+          name: Build Docker image (placeholder DB URL for prisma generate)
+          command: |
+            docker build \
+              --build-arg ENVIRONMENT=dev \
+              --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
+              -t edcw-backend:ci .
+
   main-job:
     executor: node-executor
     environment:
@@ -115,6 +129,8 @@ workflows:
       - lint-ts:
           requires: [install-dependencies]
       - jest-coverage:
+          requires: [install-dependencies]
+      - docker-build:
           requires: [install-dependencies]
 
   main: # run only when there is a commit to main

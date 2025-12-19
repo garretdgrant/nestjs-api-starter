@@ -1,7 +1,13 @@
 # Optimized multistage Dockerfile for building and running a lightweight
 # production-ready Node.js application
 # Stage 1: Build
-FROM node:20 AS builder
+FROM node:24 AS builder
+
+# Build-time defaults (placeholder values) to satisfy prisma.config.ts
+ARG ENVIRONMENT=dev
+ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
+ENV ENVIRONMENT=${ENVIRONMENT} \
+    DATABASE_URL=${DATABASE_URL}
 
 # Set the working directory
 WORKDIR /app
@@ -10,7 +16,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+RUN npm install -g pnpm@10.26.0 && pnpm install --frozen-lockfile
 
 # Copy the rest of the application files
 COPY . .
@@ -19,7 +25,7 @@ COPY . .
 RUN pnpm build
 
 # Stage 2: Runtime
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 # Set the working directory
 WORKDIR /app
