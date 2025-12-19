@@ -35,7 +35,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 
 # Install only production dependencies
-RUN npm install -g pnpm && pnpm install --prod --frozen-lockfile
+RUN npm install -g pnpm@10.26.0 && pnpm install --prod --frozen-lockfile
 
 # Expose the application port
 EXPOSE 8000

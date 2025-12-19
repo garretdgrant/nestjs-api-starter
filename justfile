@@ -28,8 +28,8 @@ docker-buildx-and-push:
     --push \
     .
 
-pull-and-run:
-    docker pull ggrant92/edcw-backend:latest
+pull-and-run tag:
+    docker pull ggrant92/edcw-backend:{{tag}}
     docker ps -q --filter "ancestor=ggrant92/edcw-backend:latest" | xargs -r docker stop
     docker ps -a -q --filter "ancestor=ggrant92/edcw-backend:latest" | xargs -r docker rm
     docker run -d \
