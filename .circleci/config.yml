@@ -113,7 +113,10 @@ jobs:
       #     name: Docker login
       #     command: |
       #       echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-
+      - run:
+          name: Enable buildx container driver
+          command: |
+            docker buildx create --use --name multiarch || docker buildx use multiarch
       - run:
           name: Build & push image
           command: |
