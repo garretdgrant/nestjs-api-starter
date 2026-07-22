@@ -1,4 +1,4 @@
-import { Client, Project, User } from '@generated/prisma/client';
+import { Client, Project, User } from '../../generated/prisma/client';
 
 export interface JwtPayload {
   sub: string;

@@ -49,9 +49,65 @@ using NestJS. It serves two main purposes:
 
 ## Getting Started
 
+### Quickstart: Spin Up a New Local API
+
+Use this checklist when copying this starter for a new API:
+
+1. Replace the project-specific names in `justfile`:
+   - Docker image and container names
+   - Docker network name
+   - PostgreSQL container, database, and volume names
+   - Docker Hub image path, if the image will be pushed
+2. Update `.env.example` with the new local PostgreSQL database name, then
+   create the ignored local environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Replace the development secrets in `.env`. Keep `ENVIRONMENT=dev`, and
+   ensure `LOCAL_DATABASE_URL` matches the database created by
+   `start-local-db` in the `justfile`.
+4. Update the API name and description in `src/main.ts` and the package name in
+   `package.json`.
+5. Install dependencies and start PostgreSQL:
+
+   ```bash
+   pnpm install
+   just start-local-db
+   ```
+
+6. Generate the Prisma client and apply the development migrations:
+
+   ```bash
+   pnpm run prisma:generate
+   pnpm run prisma:migrate:dev
+   ```
+
+7. Start the API with hot reload:
+
+   ```bash
+   pnpm run start:dev
+   ```
+
+8. Verify the local endpoints:
+   - API: [http://localhost:8000](http://localhost:8000)
+   - Health: [http://localhost:8000/health](http://localhost:8000/health)
+   - Swagger: [http://localhost:8000/swagger](http://localhost:8000/swagger)
+
+For the current PepPal API, the local connection string is:
+
+```dotenv
+LOCAL_DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/peppal
+```
+
+Use unique container, network, database, and volume names for each cloned API
+if multiple projects will run locally at the same time.
+
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v20 or higher recommended)
+- [Node.js](https://nodejs.org/) (v24)
+- [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) (optional for Docker setup)
 - [Just Task Runner](https://www.npmjs.com/package/just-task) (optional for simplifying commands)
 
@@ -139,9 +195,9 @@ pnpm run test:cov
 ### Swagger UI
 
 - Access the interactive Swagger UI at:
-  [http://localhost:8000/api](http://localhost:8000/api)
+  [http://localhost:8000/swagger](http://localhost:8000/swagger)
 - View the OpenAPI schema (JSON format) at:
-  [http://localhost:8000/api-json](http://localhost:8000/api-json)
+  [http://localhost:8000/swagger-json](http://localhost:8000/swagger-json)
 
 ### Auth: Client Signup (MVP)
 

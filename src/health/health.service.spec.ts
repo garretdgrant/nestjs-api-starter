@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthService } from './health.service';
 import { HealthCheckResponseDto } from './dto/get-health.dto';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('HealthService', () => {
   let service: HealthService;

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
-import { Role, User } from '@generated/prisma/client';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { Role, User } from '../../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './user.service';
 import { CreateClientUserDto } from './dto/create-client-user.dto';
 
