@@ -1,190 +1,131 @@
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
-import { Prisma, Role } from '../../generated/prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto } from './dto/login.dto';
-import { JwtService } from '@nestjs/jwt';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { createHash, randomBytes } from 'node:crypto';
+import type { Env } from '../config/env';
+import { User } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserService } from '../user/user.service';
+import type { JwtPayload } from './auth.types';
 import {
-  JwtPayload,
-  SafeClient,
-  SafeProject,
-  SafeUser,
-  toSafeUser,
-} from './auth.types';
-import { ClientSignupDto } from './dto/client-signup.dto';
+  AuthResponseDto,
+  LoginDto,
+  RegisterDto,
+  UserResponseDto,
+} from './dto/auth.dto';
+import { hashPassword, verifyPassword } from './password';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
+  // Verified against when the email is unknown, so a login attempt takes the
+  // same time whether or not the account exists.
+  private dummyPasswordHash?: Promise<string>;
 
   constructor(
+    private readonly users: UserService,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
-  async login(dto: LoginDto): Promise<{
-    accessToken: string;
-    user: SafeUser;
-  }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+  async register(dto: RegisterDto): Promise<AuthResponseDto> {
+    const user = await this.users.create({
+      email: dto.email,
+      name: dto.name,
+      passwordHash: await hashPassword(dto.password),
     });
+    return this.issueTokens(user);
+  }
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const passwordValid = await bcrypt.compare(
+  async login(dto: LoginDto): Promise<AuthResponseDto> {
+    const user = await this.users.findByEmail(dto.email);
+    this.dummyPasswordHash ??= hashPassword(randomBytes(16).toString('hex'));
+    const passwordValid = await verifyPassword(
       dto.password,
-      user.hashedPassword,
+      user?.passwordHash ?? (await this.dummyPasswordHash),
     );
-
-    if (!passwordValid) {
+    if (!user || !passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    return this.issueTokens(user);
+  }
 
+  /**
+   * Exchanges a refresh token for a new token pair. Each refresh token works
+   * once; presenting one that was already used or revoked signals possible
+   * theft, so every session for that user is revoked.
+   */
+  async refresh(refreshToken: string): Promise<AuthResponseDto> {
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: this.hashToken(refreshToken) },
+      include: { user: true },
+    });
+    if (!stored) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const now = new Date();
+    // Conditional update so two concurrent requests cannot both spend it.
+    const claimed = await this.prisma.refreshToken.updateMany({
+      where: { id: stored.id, revokedAt: null },
+      data: { revokedAt: now },
+    });
+    if (claimed.count === 0) {
+      await this.prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    if (stored.expiresAt <= now) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    return this.issueTokens(stored.user);
+  }
+
+  /** Revokes the refresh token. Succeeds silently if it is unknown. */
+  async logout(refreshToken: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { tokenHash: this.hashToken(refreshToken), revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async me(userId: string): Promise<UserResponseDto> {
+    const user = await this.users.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User no longer exists');
+    }
+    return UserResponseDto.from(user);
+  }
+
+  private async issueTokens(user: User): Promise<AuthResponseDto> {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
-      clientId: user.clientId,
     };
-
     const accessToken = await this.jwtService.signAsync(payload);
 
-    return {
-      accessToken,
-      user: toSafeUser(user),
-    };
+    const refreshToken = randomBytes(32).toString('base64url');
+    const ttlDays = this.config.get('REFRESH_TOKEN_TTL_DAYS', { infer: true });
+    await this.prisma.refreshToken.create({
+      data: {
+        tokenHash: this.hashToken(refreshToken),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + ttlDays * MS_PER_DAY),
+      },
+    });
+
+    return { accessToken, refreshToken, user: UserResponseDto.from(user) };
   }
 
-  async clientSignup(dto: ClientSignupDto): Promise<{
-    user: SafeUser;
-    client: SafeClient;
-    project: SafeProject;
-    accessToken: string;
-  }> {
-    const expectedSecret = this.configService.get<string>('SIGN_UP_SECRET');
-    if (!expectedSecret || dto.signUpSecret !== expectedSecret) {
-      throw new UnauthorizedException('Invalid signup secret');
-    }
-
-    const normalizedEmail = dto.email.trim().toLowerCase();
-    const trimmedCompany = dto.companyName.trim();
-
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-    if (existingUser) {
-      throw new ConflictException('Email already in use');
-    }
-
-    const existingClient = await this.prisma.client.findUnique({
-      where: { name: trimmedCompany },
-    });
-    if (existingClient) {
-      throw new ConflictException('Company name already in use');
-    }
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    try {
-      const { user, client, project } = await this.prisma.$transaction(
-        async (tx) => {
-          const createdClient = await tx.client.create({
-            data: {
-              name: trimmedCompany,
-            },
-          });
-
-          const createdUser = await tx.user.create({
-            data: {
-              email: normalizedEmail,
-              name: dto.contactName.trim(),
-              hashedPassword,
-              role: Role.USER,
-              staffRole: null,
-              clientId: createdClient.id,
-              isEmailVerified: false,
-            },
-          });
-
-          const createdProject = await tx.project.create({
-            data: {
-              name: dto.projectName.trim(),
-              clientId: createdClient.id,
-            },
-          });
-
-          return {
-            user: toSafeUser(createdUser),
-            client: createdClient,
-            project: createdProject,
-          };
-        },
-      );
-
-      const payload: JwtPayload = {
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        clientId: user.clientId,
-      };
-
-      const accessToken = await this.jwtService.signAsync(payload);
-
-      this.logger.log(
-        `client_signup_success userId=${user.id} clientId=${client.id}`,
-      );
-
-      return { user, client, project, accessToken };
-    } catch (error) {
-      const conflict = this.mapUniqueConstraint(error);
-      if (conflict) {
-        this.logger.warn(
-          `client_signup_conflict target=${conflict} email=${normalizedEmail} company=${trimmedCompany}`,
-        );
-        throw new ConflictException(
-          conflict === 'email'
-            ? 'Email already in use'
-            : 'Company name already in use',
-        );
-      }
-
-      this.logger.error(
-        'client_signup_failed',
-        error instanceof Error ? error.stack : String(error),
-      );
-      throw error;
-    }
-  }
-
-  private mapUniqueConstraint(error: unknown): 'email' | 'company' | null {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      const target = error.meta?.target;
-      const targets = Array.isArray(target)
-        ? (target as string[])
-        : typeof target === 'string'
-          ? [target]
-          : [];
-
-      if (targets.some((t) => t.includes('email'))) {
-        return 'email';
-      }
-      if (targets.some((t) => t.includes('name'))) {
-        return 'company';
-      }
-    }
-    return null;
+  // Refresh tokens are high-entropy random values, so a fast hash is enough
+  // to keep a leaked database from yielding usable tokens.
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 }

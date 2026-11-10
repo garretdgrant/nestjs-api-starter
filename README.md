@@ -1,260 +1,193 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 # NestJS API Starter
 
-This project is a boilerplate application designed to demonstrate my skills and
-best practices in building scalable, maintainable, and production-ready APIs
-using NestJS. It serves two main purposes:
+A starting point for new APIs: NestJS 12, Prisma 7 and PostgreSQL, with user
+authentication already working. Clone it, rename it, and start adding your own
+modules.
 
-1. **Portfolio**: To showcase my ability to create professional-grade APIs,
-   incorporating industry best practices and modern tools.
-2. **Starter App**: To act as a foundation for quickly spinning up new APIs.
+## What's included
 
-## Features
+- **User auth**: register, login, refresh, logout and "who am I", using
+  short-lived JWT access tokens and rotating refresh tokens.
+- **Secure by default**: every route requires a token unless marked
+  `@Public()`; `@Roles(['ADMIN'])` restricts a route by role; requests are
+  rate-limited.
+- **PostgreSQL via Prisma**: a `User` and `RefreshToken` schema with one
+  initial migration.
+- **Swagger UI** at `/swagger` (disabled when `ENVIRONMENT=prod`).
+- **Health checks** at `/health` and `/health/db`.
+- **Configuration validated at startup**: the app refuses to start with a
+  clear message if a required variable is missing.
+- **Tests**: Jest unit tests and an end-to-end suite that needs no database.
+- **Tooling**: ESLint, Prettier, a multistage Dockerfile, a `justfile`, and a
+  CircleCI config that runs checks only.
 
-- **Swagger Integration**: Automatically generated API documentation with
-  Swagger UI.
-- **Health Check Endpoint**: `/health` endpoint to monitor application health
-  and uptime.
-- **Client Signup Flow**: `POST /auth/client-signup` creates Client + User +
-  Project atomically and returns a JWT for immediate login.
-- **Test Coverage Enforcement**: Jest configured with a minimum coverage
-  threshold of 85% for branches, functions, lines, and statements.
-- **Multistage Docker Image**: Efficient Dockerfile design to optimize build and
-  runtime images for production-ready deployments.
-- **Task Automation with Justfile**: Simplified commands for building, running,
-  and cleaning up Docker containers.
+## Quickstart
 
-## Getting Started
+Prerequisites: [Node.js 26](https://nodejs.org/) (run `nvm use` to pick up `.nvmrc`),
+[pnpm](https://pnpm.io/), [Docker](https://www.docker.com/) and
+[just](https://github.com/casey/just).
 
-### Quickstart: Spin Up a New Local API
+```bash
+pnpm install
+cp .env.example .env            # then set JWT_SECRET (openssl rand -base64 48)
+just start-local-db             # PostgreSQL 18 on localhost:5432
+pnpm run prisma:migrate:dev     # create the tables
+pnpm run start:dev              # API with hot reload on http://localhost:8000
+```
 
-Use this checklist when copying this starter for a new API:
+Then open [http://localhost:8000/swagger](http://localhost:8000/swagger), or
+try it from a terminal:
 
-1. Replace the project-specific names in `justfile`:
-   - Docker image and container names
-   - Docker network name
-   - PostgreSQL container, database, and volume names
-   - Docker Hub image path, if the image will be pushed
-2. Update `.env.example` with the new local PostgreSQL database name, then
-   create the ignored local environment file:
+```bash
+# Create an account. The response contains accessToken, refreshToken and user.
+curl -X POST localhost:8000/auth/register \
+  -H 'content-type: application/json' \
+  -d '{"email":"alice@example.com","password":"correct-horse-battery","name":"Alice"}'
 
-   ```bash
-   cp .env.example .env
-   ```
+# Call a protected route with the access token.
+curl localhost:8000/auth/me -H "Authorization: Bearer <accessToken>"
+```
 
-3. Replace the development secrets in `.env`. Keep `ENVIRONMENT=dev`, and
-   ensure `LOCAL_DATABASE_URL` matches the database created by
-   `start-local-db` in the `justfile`.
-4. Update the API name and description in `src/main.ts` and the package name in
+If port 5432 is already taken, start the database elsewhere with
+`just db_port=5433 start-local-db` and change the port in `DATABASE_URL`.
+
+### Starting a new project from this starter
+
+1. Change `app` and `db_name` at the top of the `justfile` so containers,
+   volumes and databases don't collide with other projects.
+2. Update the database name in `.env.example`, and the `name` in
    `package.json`.
-5. Install dependencies and start PostgreSQL:
+3. Update the API title in `src/app.setup.ts`.
 
-   ```bash
-   pnpm install
-   just start-local-db
-   ```
+## Configuration
 
-6. Generate the Prisma client and apply the development migrations:
+Set these in `.env` locally, or in the environment when deployed. See
+`.env.example`.
 
-   ```bash
-   pnpm run prisma:generate
-   pnpm run prisma:migrate:dev
-   ```
+| Variable                 | Required | Default | Purpose                                           |
+| ------------------------ | -------- | ------- | ------------------------------------------------- |
+| `DATABASE_URL`           | yes      |         | PostgreSQL connection string                      |
+| `JWT_SECRET`             | yes      |         | Signs access tokens; at least 32 characters       |
+| `JWT_EXPIRES_IN`         | no       | `15m`   | Access token lifetime, such as `15m` or `1h`      |
+| `REFRESH_TOKEN_TTL_DAYS` | no       | `30`    | Refresh token lifetime in days                    |
+| `ENVIRONMENT`            | no       | `dev`   | `dev`, `stag` or `prod`; `prod` turns Swagger off |
+| `PORT`                   | no       | `8000`  | Port the server listens on                        |
 
-7. Start the API with hot reload:
+## Authentication
 
-   ```bash
-   pnpm run start:dev
-   ```
+| Endpoint              | Auth   | Body                        | Result                              |
+| --------------------- | ------ | --------------------------- | ----------------------------------- |
+| `POST /auth/register` | public | `email`, `password`, `name` | `201` with tokens and user          |
+| `POST /auth/login`    | public | `email`, `password`         | `200` with tokens and user          |
+| `POST /auth/refresh`  | public | `refreshToken`              | `200` with a new token pair         |
+| `POST /auth/logout`   | public | `refreshToken`              | `204`; the refresh token is revoked |
+| `GET /auth/me`        | Bearer |                             | `200` with the signed-in user       |
 
-8. Verify the local endpoints:
-   - API: [http://localhost:8000](http://localhost:8000)
-   - Health: [http://localhost:8000/health](http://localhost:8000/health)
-   - Swagger: [http://localhost:8000/swagger](http://localhost:8000/swagger)
+How it works:
 
-For the current PepPal API, the local connection string is:
+- The **access token** is a JWT that lasts 15 minutes. Send it as
+  `Authorization: Bearer <accessToken>`. It carries the user's id, email and
+  role, so protected routes do not query the database to authenticate.
+- The **refresh token** is a random value that lasts 30 days. Only its SHA-256
+  hash is stored. Each one works once: `POST /auth/refresh` returns a new pair
+  and revokes the old token.
+- If a refresh token that was already used or revoked is presented again, the
+  API treats it as possibly stolen and revokes every session for that user, who
+  then has to log in again. Clients should make sure they send only one
+  refresh request at a time.
+- Passwords are hashed with scrypt from Node's built-in `crypto` module, so
+  there is no native dependency to compile.
+- `register` and `login` allow 10 requests per minute per IP address; all other
+  routes allow 100. Behind a reverse proxy, set Express's `trust proxy` so the
+  limit applies to the client's address rather than the proxy's.
 
-```dotenv
-LOCAL_DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/peppal
+Protecting your own routes:
+
+```ts
+@Controller('reports')
+export class ReportsController {
+  @Get() // any signed-in user
+  list(@CurrentUser() user: AuthUser) {}
+
+  @Roles(['ADMIN']) // admins only
+  @Delete(':id')
+  remove() {}
+
+  @Public() // no token needed
+  @Get('status')
+  status() {}
+}
 ```
 
-Use unique container, network, database, and volume names for each cloned API
-if multiple projects will run locally at the same time.
+`Public`, `Roles` and `CurrentUser` come from `src/auth/auth.decorators.ts`.
+New users get the `USER` role; to make an admin, set `role` to `ADMIN` on the
+row in the database (for example with `pnpm run prisma:studio`).
 
-### Prerequisites
+Not included, to keep the starter small: email verification, password reset,
+CORS configuration, and cleanup of expired refresh-token rows.
 
-- [Node.js](https://nodejs.org/) (v24)
-- [pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/) (optional for Docker setup)
-- [Just Task Runner](https://www.npmjs.com/package/just-task) (optional for simplifying commands)
+## Project layout
 
-### Installation
+```
+prisma/schema.prisma     Database schema; migrations live beside it
+src/main.ts              Entry point
+src/app.module.ts        Module wiring and the global guards
+src/app.setup.ts         Validation pipe and Swagger setup
+src/config/env.ts        Environment validation
+src/auth/                Auth endpoints, guards, decorators, password hashing
+src/user/                User lookups and creation
+src/health/              Health endpoints
+src/prisma/              Database client (PrismaService)
+src/generated/           Generated Prisma client (not committed)
+test/                    End-to-end tests
+```
 
-1. Clone the repository:
+## Commands
 
-   ```bash
-   git clone https://github.com/garretdgrant/nestjs-api-starter.git
-   cd nestjs-api-starter
-   ```
+| Command                          | What it does                                       |
+| -------------------------------- | -------------------------------------------------- |
+| `pnpm run start:dev`             | Run with hot reload                                |
+| `pnpm run build`                 | Generate the Prisma client and compile to `dist/`  |
+| `pnpm run start:prod`            | Run the compiled app                               |
+| `pnpm test`                      | Unit tests                                         |
+| `pnpm run test:cov`              | Unit tests with coverage thresholds                |
+| `pnpm run test:e2e`              | End-to-end tests (in-memory database stand-in)     |
+| `pnpm run lint`                  | ESLint                                             |
+| `pnpm run typecheck`             | TypeScript check without emitting                  |
+| `pnpm run format:check`          | Prettier check (`format:write` to fix)             |
+| `pnpm run prisma:migrate:dev`    | Create and apply migrations during development     |
+| `pnpm run prisma:migrate:deploy` | Apply existing migrations (staging and production) |
+| `pnpm run prisma:studio`         | Browse the database                                |
+| `pnpm run run:ci`                | Everything CI runs, in one command                 |
 
-2. Install dependencies:
+After changing `prisma/schema.prisma`, run `pnpm run prisma:migrate:dev` to
+create a migration and regenerate the client.
 
-   ```bash
-   pnpm install
-   ```
-
-3. Set up environment variables: Copy `.env.example` to `.env` and update the
-   variables as needed.
-
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Start the application:
-   ```bash
-   pnpm run start:dev
-   ```
-
-### Running with Docker
-
-You can run the application using Docker, either with the `just` command or
-manually.
-
-#### Option 1: Using `just`
-
-If you have the `just` task runner installed, use the following commands:
-
-- **Build and run the container**:
-
-  ```bash
-  just build-and-run
-  ```
-
-  This builds the Docker image and starts the container on port `8000`.
-
-- **Stop and remove the running container**:
-  ```bash
-  just teardown
-  ```
-  This stops and removes any containers started by the `build-and-run` command.
-
-#### Option 2: Using Docker Commands
-
-If you don’t have `just`, you can build and run the container manually:
-
-- **Build and run the container**:
-
-  ```bash
-  docker build -t nestjs-api-starter .
-  docker run -d -p 8000:8000 nestjs-api-starter
-  ```
-
-- **Stop and remove the running container**:
-  ```bash
-  docker ps -q --filter "ancestor=nestjs-api-starter" | xargs -r docker stop
-  docker ps -a -q --filter "ancestor=nestjs-api-starter" | xargs -r docker rm
-  ```
-
-### Running Tests
-
-Run tests with Jest:
+## Docker
 
 ```bash
-pnpm run test
+just start-local-db   # database container on its own Docker network
+just build-and-run    # build the image and run it on port 8000
+just teardown         # stop and remove the API container
+just stop-local-db    # stop the database; its data volume is kept
 ```
 
-Generate a coverage report:
+`build-and-run` reads `.env` and points `DATABASE_URL` at the database
+container. The image contains only the compiled app and production
+dependencies, so apply migrations from your machine or CI with
+`pnpm run prisma:migrate:deploy`.
 
-```bash
-pnpm run test:cov
-```
+## Notes on the toolchain
 
-### Swagger UI
-
-- Access the interactive Swagger UI at:
-  [http://localhost:8000/swagger](http://localhost:8000/swagger)
-- View the OpenAPI schema (JSON format) at:
-  [http://localhost:8000/swagger-json](http://localhost:8000/swagger-json)
-
-### Auth: Client Signup (MVP)
-
-- **Endpoint**: `POST /auth/client-signup` (public)
-- **Purpose**: Atomically create a Client, a client User, and an initial Project,
-  then return a JWT for immediate login.
-- **Request body**:
-  ```json
-  {
-    "contactName": "Alice Doe",
-    "companyName": "Acme Co",
-    "email": "alice@example.com",
-    "password": "supersecret",
-    "projectName": "Website"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "accessToken": "<jwt>",
-    "user": { "id": "...", "email": "...", "role": "USER", "clientId": "..." },
-    "client": { "id": "...", "name": "Acme Co" },
-    "project": { "id": "...", "clientId": "...", "name": "Website" }
-  }
-  ```
-- Validation: trims input, lowercases email, enforces lengths (email valid,
-  password 8–72 chars, names 1–120 chars).
-- Errors: `409 Email already in use`, `409 Company name already in use`, or
-  validation errors per field.
-
-### Health Check
-
-Check the application's health at:
-
-- [http://localhost:8000/health](http://localhost:8000/health)
-
-## Future Updates
-
-The following features are planned for future updates:
-
-- **CircleCI Configuration**: Add automated builds, tests, and deployments to
-  showcase CI/CD skills.
-- **Local Docker Database**: Provide a `docker-compose.yml` file to spin up a
-  local database (e.g., PostgreSQL or MySQL).
-- **Advanced Testing**: Add integration tests and mocking for third-party APIs.
-- **Security Enhancements**: Implement middleware for security headers and
-  environment variable validation.
-- **API Versioning**: Introduce API versioning to support multiple versions of
-  the application.
-- **Metrics and Monitoring**: Add tools like New Relic for monitoring and
-  logging.
-
-## Contributions
-
-Contributions are not accepted for this repository, feel free to clone to spin
-up your own API.
+- NestJS 12 ships as ES modules. This project stays CommonJS, which works
+  through Node's `require(esm)` support. Jest needs the
+  `--experimental-vm-modules` flag for this, which the test scripts pass.
+- TypeScript is pinned to 6.0: ts-jest, typescript-eslint and the Nest CLI do
+  not support TypeScript 7 yet.
+- Node is pinned to 26.13.0, the current LTS line, in `.nvmrc`, the
+  `Dockerfile` and `.circleci/config.yml`; `package.json` accepts any 26.x from
+  26.13.0 up. Update the three pins together.
 
 ## License
 
-This project is licensed under the MIT License.
+MIT

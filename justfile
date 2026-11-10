@@ -1,62 +1,46 @@
-# Justfile to simplify and organize commonly used bash commands
-# Dependencies: just task runner https://www.npmjs.com/package/just-task
-# run a just command with `just <COMMAND>`
+# Task shortcuts. Requires just: https://github.com/casey/just
+# Run a recipe with `just <recipe>`; list them with `just --list`.
 
-# Initialize docker network for images to talk to local DB
-docker-init-net:
-    docker network create peppal-net || true
-    docker network connect peppal-net peppal-postgres || true
-# Build and run the image on port 8000 with placeholder build args (override manually if needed)
-build-and-run:
-    docker build \
-        --build-arg ENVIRONMENT=dev \
-        --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
-        -t peppal-backend . && \
-    docker run -d -p 8000:8000 \
-        --name peppal-backend-local \
-        --network peppal-net \
-        --env-file .env.local \
-        peppal-backend
+# Rename these when you copy the starter so containers, volumes and databases
+# from different projects don't collide. Override per run with e.g.
+# `just db_port=5433 start-local-db`.
+app := "api-starter"
+db_name := "api_starter"
+db_port := "5432"
+db_password := "devpassword"
 
-# Build the image only (no run), tagging as latest
-docker-buildx-and-push:
-    docker buildx build \
-    --platform linux/amd64,linux/arm64 \
-    --build-arg ENVIRONMENT=dev \
-    --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
-    -t ggrant92/peppal-backend:latest \
-    --push \
-    .
-
-pull-and-run tag:
-    docker pull ggrant92/peppal-backend:{{tag}}
-    docker ps -q --filter "ancestor=ggrant92/peppal-backend:latest" | xargs -r docker stop
-    docker ps -a -q --filter "ancestor=ggrant92/peppal-backend:latest" | xargs -r docker rm
-    docker run -d \
-        --name peppal-backend \
-        --network peppal-net \
-        -p 8000:8000 \
-        --env-file .env.local \
-        ggrant92/peppal-backend:latest
-
-
-# Tears down and removes the running container from build-and-run
-teardown:
-    docker stop peppal-backend || true
-    docker rm peppal-backend || true
-    docker stop peppal-backend-local || true
-    docker rm peppal-backend-local || true
-
+# Start a local PostgreSQL container with a persistent volume
 start-local-db:
-    docker run --name peppal-postgres \
-        -e POSTGRES_PASSWORD=devpassword \
+    docker network create {{app}}-net 2>/dev/null || true
+    docker run --name {{app}}-postgres \
+        --network {{app}}-net \
         -e POSTGRES_USER=postgres \
-        -e POSTGRES_DB=peppal \
-        -p 5432:5432 \
-        -v peppal-postgres-data:/var/lib/postgresql/data \
-        -d postgres:17 \
-        && echo "The Dev Database is Running at postgresql://postgres:devpassword@localhost:5432/peppal 😎"
+        -e POSTGRES_PASSWORD={{db_password}} \
+        -e POSTGRES_DB={{db_name}} \
+        -p {{db_port}}:5432 \
+        -v {{app}}-postgres-data:/var/lib/postgresql \
+        -d postgres:18
+    @echo "Database: postgresql://postgres:{{db_password}}@localhost:{{db_port}}/{{db_name}}"
 
+# Stop and remove the local PostgreSQL container (the data volume is kept)
 stop-local-db:
-    docker stop peppal-postgres || true
-    docker rm peppal-postgres || true
+    docker stop {{app}}-postgres || true
+    docker rm {{app}}-postgres || true
+
+# Build the Docker image
+build:
+    docker build -t {{app}} .
+
+# Build the image and run it on port 8000 against the local database container
+build-and-run: build
+    docker run -d -p 8000:8000 \
+        --name {{app}} \
+        --network {{app}}-net \
+        --env-file .env \
+        -e DATABASE_URL=postgresql://postgres:{{db_password}}@{{app}}-postgres:5432/{{db_name}} \
+        {{app}}
+
+# Stop and remove the container started by build-and-run
+teardown:
+    docker stop {{app}} || true
+    docker rm {{app}} || true

@@ -1,183 +1,74 @@
 version: 2.1
 
-# Alias used for caching dependencies. Cache can be cleared by updating vx
-aliases:
-  - &pnpm-cache-key 'pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}'
-
-anchors:
-  release: &release # Only run for version tags, dont build branches
-    filters:
-      tags:
-        only: /v.*/
-      branches:
-        ignore: /.*/
+# Checks only: this starter does not build, push or deploy anything from CI.
+# Add deploy jobs per project once it has its own registry and hosting.
 
 executors:
   node-executor:
     docker:
-      - image: cimg/node:24.12
-jobs:
-  install-dependencies:
-    executor: node-executor
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restore pnpm Cache
-          key: *pnpm-cache-key
-      - run:
-          name: Install pnpm package manager
-          command: sudo npm i pnpm@latest-10 -g
-      - run:
-          name: Install Dependencies from Lockfile
-          command: pnpm install --frozen-lockfile
-      - run:
-          name: Generate Prisma Client
-          command: ENVIRONMENT=dev LOCAL_DATABASE_URL='dummy' pnpm prisma:generate
-      - save_cache:
-          key: *pnpm-cache-key
-          paths:
-            - ~/.npm
-            - ./node_modules
+      # Keep in step with .nvmrc and the Dockerfile.
+      - image: cimg/node:26.13.0
 
-  lint-ts:
-    executor: node-executor
+commands:
+  install:
+    description: Check out the code and install dependencies from the lockfile
     steps:
       - checkout
       - restore_cache:
-          name: Restore pnpm Cache
-          key: *pnpm-cache-key
+          name: Restore dependency cache
+          # Bump the version prefix to clear the cache.
+          key: pnpm-packages-v2-{{ checksum "pnpm-lock.yaml" }}
       - run:
-          name: Install pnpm package manager
-          command: sudo npm i pnpm@latest-10 -g
+          name: Install pnpm
+          command: sudo npm install -g pnpm@12.18.0
       - run:
-          name: Install Dependencies (in case of cache miss)
+          name: Install dependencies
           command: pnpm install --frozen-lockfile
+      - save_cache:
+          key: pnpm-packages-v2-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - ./node_modules
       - run:
-          name: Check Formatting with Prettier
+          name: Generate Prisma client
+          command: pnpm run prisma:generate
+
+jobs:
+  lint:
+    executor: node-executor
+    steps:
+      - install
+      - run:
+          name: Check formatting
           command: pnpm run format:check
       - run:
-          name: Generate Prisma Client
-          command: ENVIRONMENT=dev LOCAL_DATABASE_URL='dummy' pnpm prisma:generate
-      - run:
-          name: Run eslint Linter
+          name: Lint
           command: pnpm run lint
+      - run:
+          name: Typecheck
+          command: pnpm run typecheck
 
-  jest-coverage:
-    executor: node-executor
-    environment:
-      JWT_SECRET: 'jwt-secret'
-      LOCAL_DATABASE_URL: 'someurl'
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restore pnpm Cache
-          key: *pnpm-cache-key
-      - run:
-          name: Install pnpm package manager
-          command: sudo npm i pnpm@latest-10 -g
-      - run:
-          name: Install Dependencies (in case of cache miss)
-          command: pnpm install --frozen-lockfile
-      - run:
-          name: Generate Prisma Client
-          command: ENVIRONMENT=dev LOCAL_DATABASE_URL='dummy' pnpm prisma:generate
-      - run:
-          name: Run Jest tests with coverage
-          command: pnpm test:cov
-
-  railway-redeploy-stag:
+  test:
     executor: node-executor
     steps:
+      - install
       - run:
-          name: Install railway cli
-          command: sudo npm i -g @railway/cli
+          name: Unit tests with coverage
+          command: pnpm run test:cov
       - run:
-          name: Redeploy Railway Staging
-          command: RAILWAY_TOKEN=$RAILWAY_TOKEN_STAG railway redeploy --service $RAILWAY_SERVICE_NAME -y
+          name: End-to-end tests
+          command: pnpm run test:e2e
 
-  railway-redeploy-prod:
+  build:
     executor: node-executor
     steps:
+      - install
       - run:
-          name: Install railway cli
-          command: sudo npm i -g @railway/cli
-      - run:
-          name: Redeploy Railway Production
-          command: RAILWAY_TOKEN=$RAILWAY_TOKEN_PROD railway redeploy --service $RAILWAY_SERVICE_NAME -y
-
-  build_and_push_image:
-    parameters:
-      tag:
-        type: string
-    docker:
-      - image: cimg/base:stable
-    environment:
-      IMAGE_NAME: ggrant92/edcw-backend
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Docker login
-          command: |
-            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-      - run:
-          name: Enable buildx container driver
-          command: |
-            docker buildx create --use --name multiarch || docker buildx use multiarch
-      - run:
-          name: Build & push image
-          command: |
-            docker buildx build \
-              --build-arg ENVIRONMENT=dev \
-              --build-arg DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
-              --platform linux/amd64,linux/arm64 \
-              -t "$IMAGE_NAME:<< parameters.tag >>" \
-              --push \
-              .
-
-
-  release-job:
-    executor: node-executor
-    environment:
-      ENVIRONMENT: dev
-      LOCAL_DATABASE_URL: postgresql://postgres:devpassword@localhost:5432/edc_portal
-    steps:
-      - run:
-          name: Example Release Job
-          command: echo 'This job only runs on release tags'
+          name: Build
+          command: pnpm run build
 
 workflows:
-  pr: # run on any branch excluding main
-    when:
-      not:
-        matches: { pattern: '^main$', value: << pipeline.git.branch >> }
+  ci:
     jobs:
-      - install-dependencies
-      - lint-ts:
-          requires: [install-dependencies]
-      - jest-coverage:
-          requires: [install-dependencies]
-      - build_and_push_image:
-          tag: pr
-          requires: [install-dependencies]
-      - railway-redeploy-stag:
-          requires: [build_and_push_image]
-
-  main: # run only when there is a commit to main
-    when:
-      matches: { pattern: '^main$', value: << pipeline.git.branch >> }
-    jobs:
-      - install-dependencies
-      - build_and_push_image:
-          tag: prod
-          requires: [install-dependencies]
-      - railway-redeploy-prod:
-          requires: [build_and_push_image]
-
-  release: # run only when a git tag is present (GitHub release/tag)
-    when: << pipeline.git.tag >>
-    jobs:
-      - install-dependencies
-      - build_and_push_image:
-          tag: prod
-          requires: [install-dependencies]
+      - lint
+      - test
+      - build

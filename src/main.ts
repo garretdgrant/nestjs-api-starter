@@ -1,60 +1,27 @@
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { INestApplication, Logger } from '@nestjs/common';
-import { ValidationPipe } from '@nestjs/common';
+import { configureApp, setupSwagger } from './app.setup';
+import type { Env } from './config/env';
 
-export async function createSwagger(app: INestApplication) {
-  const config = new DocumentBuilder()
-    .setTitle('EDC Web Backend API')
-    .setDescription(`API for edc web design`)
-    .setVersion('0.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      },
-      'JWT',
-    )
-    .addApiKey(
-      {
-        type: 'apiKey',
-        in: 'header',
-        name: 'x-api-key',
-        description: 'API key required on protected routes',
-      },
-      'ApiKey',
-    )
-    .addSecurityRequirements('ApiKey')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, () => document);
-}
-
-export async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-  await createSwagger(app);
-  logger.log(`ENVIRONMENT=${process.env.ENVIRONMENT ?? 'undefined'}`);
-  const port: number = Number(process.env.PORT) ?? 8000;
-  logger.log(`PORT: ${port}`);
+  const config = app.get<ConfigService<Env, true>>(ConfigService);
+  const environment = config.get('ENVIRONMENT', { infer: true });
+  const port = config.get('PORT', { infer: true });
+
+  configureApp(app);
+  if (environment !== 'prod') {
+    setupSwagger(app);
+  }
+
   await app.listen(port);
-  const env = process.env.ENVIRONMENT ?? 'dev';
-  const baseUrl =
-    env === 'prod'
-      ? 'https://edc-web-backend-production.up.railway.app'
-      : env === 'stag'
-        ? 'https://edc-web-backend-staging.up.railway.app'
-        : `http://localhost:${port}`;
-  logger.log(`🚀 Application is running on ${baseUrl}`);
+  logger.log(`Listening on port ${port} (ENVIRONMENT=${environment})`);
+  if (environment !== 'prod') {
+    logger.log(`Swagger UI: http://localhost:${port}/swagger`);
+  }
 }
 
-bootstrap();
+void bootstrap();

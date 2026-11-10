@@ -1,19 +1,21 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Public } from '../auth/auth.decorators';
 import { HealthService } from './health.service';
 import { HealthCheckResponseDto } from './dto/get-health.dto';
 
-@ApiTags('Health') // Groups the endpoint under 'Health' in Swagger UI
+@ApiTags('health')
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get health status' }) // Describes the endpoint in SwaggerUI
+  @ApiOperation({ summary: 'Get health status' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Health check successful',
-    type: HealthCheckResponseDto, // Explicitly specify the response type in SwaggerUI
+    type: HealthCheckResponseDto,
   })
   getHealth(): HealthCheckResponseDto {
     return this.healthService.getHealth();
