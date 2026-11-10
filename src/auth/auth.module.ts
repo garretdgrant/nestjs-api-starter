@@ -1,30 +1,29 @@
 import { Module } from '@nestjs/common';
-import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { SignOptions } from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
+import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
+import type { Env } from '../config/env';
+import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
-    ConfigModule,
+    UserModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
+      // Global so the app-wide AuthGuard can verify tokens from any module.
+      global: true,
       inject: [ConfigService],
-      useFactory: (config: ConfigService): JwtModuleOptions => {
-        const expiresIn = (config.get<string>('JWT_EXPIRES_IN') ?? '15m') as
-          | SignOptions['expiresIn']
-          | undefined;
-        return {
-          secret: config.get<string>('JWT_SECRET') ?? 'dev-secret',
-          signOptions: { expiresIn },
-        };
-      },
+      useFactory: (config: ConfigService<Env, true>) => ({
+        secret: config.get('JWT_SECRET', { infer: true }),
+        signOptions: {
+          expiresIn: config.get('JWT_EXPIRES_IN', {
+            infer: true,
+          }) as JwtSignOptions['expiresIn'],
+        },
+      }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, PrismaService, JwtStrategy],
+  providers: [AuthService],
 })
 export class AuthModule {}

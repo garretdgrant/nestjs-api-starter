@@ -1,72 +1,57 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { SafeClient, SafeProject, SafeUser } from './auth.types';
+import type { AuthResponseDto, UserResponseDto } from './dto/auth.dto';
 
 describe('AuthController', () => {
-  let controller: AuthController;
+  const user: UserResponseDto = {
+    id: 'user-1',
+    email: 'alice@example.com',
+    name: 'Alice',
+    role: 'USER',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const tokens: AuthResponseDto = {
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    user,
+  };
+  const authService = {
+    register: jest.fn().mockResolvedValue(tokens),
+    login: jest.fn().mockResolvedValue(tokens),
+    refresh: jest.fn().mockResolvedValue(tokens),
+    logout: jest.fn().mockResolvedValue(undefined),
+    me: jest.fn().mockResolvedValue(user),
+  };
+  const controller = new AuthController(authService as unknown as AuthService);
+  const credentials = { email: user.email, password: 'correct-horse-battery' };
 
-  const authServiceMock = {
-    login: jest.fn(),
-    clientSignup: jest.fn(),
-  } as unknown as AuthService;
+  beforeEach(() => jest.clearAllMocks());
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: authServiceMock }],
-    }).compile();
-
-    controller = module.get<AuthController>(AuthController);
+  it('registers through the service', async () => {
+    await expect(controller.register(credentials)).resolves.toBe(tokens);
+    expect(authService.register).toHaveBeenCalledWith(credentials);
   });
 
-  it('delegates login to service', async () => {
-    const user = { id: 'u1', email: 'a@a.com' } as SafeUser;
-    authServiceMock.login = jest
-      .fn()
-      .mockResolvedValue({ accessToken: 'token', user });
-
-    const result = await controller.login({ email: 'a@a.com', password: 'p' });
-
-    expect(authServiceMock.login).toHaveBeenCalledWith({
-      email: 'a@a.com',
-      password: 'p',
-    });
-    expect(result).toEqual({ accessToken: 'token', user });
+  it('logs in through the service', async () => {
+    await expect(controller.login(credentials)).resolves.toBe(tokens);
+    expect(authService.login).toHaveBeenCalledWith(credentials);
   });
 
-  it('delegates clientSignup to service', async () => {
-    const user = { id: 'u1', email: 'a@a.com' } as SafeUser;
-    const client = { id: 'c1', name: 'Acme' } as SafeClient;
-    const project = {
-      id: 'p1',
-      name: 'Website',
-      clientId: 'c1',
-    } as SafeProject;
-    authServiceMock.clientSignup = jest.fn().mockResolvedValue({
-      accessToken: 'token',
-      user,
-      client,
-      project,
-    });
-
-    const result = await controller.clientSignup({
-      contactName: 'Alice',
-      companyName: 'Acme',
-      email: 'a@a.com',
-      password: 'p',
-      projectName: 'Website',
-      signUpSecret: 'test-secret',
-    });
-
-    expect(authServiceMock.clientSignup).toHaveBeenCalled();
-    expect(result).toEqual({ accessToken: 'token', user, client, project });
+  it('passes the refresh token to refresh and logout', async () => {
+    await expect(controller.refresh({ refreshToken: 'r1' })).resolves.toBe(
+      tokens,
+    );
+    await expect(
+      controller.logout({ refreshToken: 'r1' }),
+    ).resolves.toBeUndefined();
+    expect(authService.refresh).toHaveBeenCalledWith('r1');
+    expect(authService.logout).toHaveBeenCalledWith('r1');
   });
 
-  it('returns req.user for /me', () => {
-    const user = { id: 'u1', email: 'a@a.com' } as SafeUser;
-    const result = controller.me({ user });
-    expect(result).toEqual(user);
+  it('looks up the current user by the id in the token', async () => {
+    const authUser = { id: user.id, email: user.email, role: user.role };
+    await expect(controller.me(authUser)).resolves.toBe(user);
+    expect(authService.me).toHaveBeenCalledWith(user.id);
   });
 });

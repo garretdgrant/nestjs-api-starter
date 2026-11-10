@@ -1,44 +1,28 @@
-# Optimized multistage Dockerfile for building and running a lightweight
-# production-ready Node.js application
-# Stage 1: Build
-FROM node:24-alpine AS builder
+# Multistage build: compile with dev dependencies, run with production ones.
 
-# Build-time defaults (placeholder values) to satisfy prisma.config.ts
-ARG ENVIRONMENT=dev
-ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
-ENV ENVIRONMENT=${ENVIRONMENT} \
-    DATABASE_URL=${DATABASE_URL}
-
-# Set the working directory
+# Stage 1: build
+FROM node:26.13.0-alpine AS builder
 WORKDIR /app
+RUN npm install -g pnpm@12.18.0
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Install dependencies
-RUN npm install -g pnpm@10.26.0 && pnpm install --frozen-lockfile
-
-# Copy the rest of the application files
 COPY . .
+# Generates the Prisma client and compiles to dist/. No database is needed.
+RUN pnpm run build
 
-# Build the application
-RUN pnpm build
-
-# Stage 2: Runtime
-FROM node:24-alpine AS runtime
-
-# Set the working directory
+# Stage 2: runtime
+FROM node:26.13.0-alpine AS runtime
+ENV NODE_ENV=production
 WORKDIR /app
+RUN npm install -g pnpm@12.18.0
 
-# Copy the build output and package files from the builder stage
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --prod --frozen-lockfile
+
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 
-# Install only production dependencies
-RUN npm install -g pnpm@10.26.0 && pnpm install --prod --frozen-lockfile
-
-# Expose the application port
+USER node
 EXPOSE 8000
-
-# Command to run the application
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]

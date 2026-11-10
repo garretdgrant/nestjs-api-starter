@@ -1,42 +1,29 @@
-# Repository Guidelines
+# Repository guidance
 
-## Project Structure & Module Organization
+## Execution and configuration
 
-- Application code lives in `src/` (controllers, modules, services); entrypoint is `src/main.ts`.
-- Unit tests sit alongside modules as `*.spec.ts` under `src/`; end-to-end tests are in `test/` with `jest-e2e.json`.
-- Built artifacts output to `dist/` after `pnpm run build`; Docker image uses the multistage `Dockerfile`.
-- Task shortcuts are defined in `justfile` (Docker build/run helpers).
+- Use pnpm for this project. See `package.json` for scripts and `README.md` for local setup.
+- Use MCP servers only when the user explicitly authorizes their use. If a server would help, ask and wait for approval before calling it.
+- Run lint, build, and server commands only when the user explicitly asks. This includes scripts and Docker helpers that invoke those commands.
+- Never read, print, parse, edit, or load real `.env` files, including through scripts or commands that load them indirectly. Use `.env.example` and the setup docs for configuration questions. Ask the user to set required values or run commands that need those files. Never commit secrets.
 
-## Build, Test, and Development Commands
+## Project layout and conventions
 
-- Install: `pnpm install`.
-- Local dev server with reload: `pnpm run start:dev`.
-- Production build: `pnpm run build`; run compiled app with `pnpm run start:prod`.
-- Lint: `pnpm run lint`; format check/write: `pnpm run format:check` / `pnpm run format:write`.
-- Tests: `pnpm test` (unit), `pnpm run test:e2e` (e2e), `pnpm run test:cov` (coverage, enforces thresholds).
-- Docker: `just build-and-run` to build/run on port 8000; `just teardown` to stop/remove.
+- `src/main.ts` is the NestJS entry point. Keep related controllers, services, and providers together under `src/`. Keep controllers thin and put business logic in services.
+- Use TypeScript, explicit types on public APIs, and camelCase for variables and functions. Avoid `any` unless necessary. Use PascalCase for classes and follow nearby filenames, such as `user.service.ts`.
+- The build outputs to `dist/`. See `Dockerfile` and `justfile` for container workflows.
+- Swagger is exposed at `/swagger` and is disabled when `ENVIRONMENT=prod`.
 
-## Coding Style & Naming Conventions
+## Verification
 
-- TypeScript throughout; prefer explicit types on public APIs; avoid `any` unless unavoidable.
-- ESLint (flat config) enforces no-unused-vars; Prettier handles formatting (run via scripts above).
-- Files and classes use PascalCase for Nest modules/services/controllers; variables/functions in camelCase.
-- Keep controllers lean, delegate logic to services; group related providers within module folders.
+- Keep Jest unit tests alongside the code as `*.spec.ts`. Prefer testing observable behavior and mock external calls as needed.
+- For routine changes, run relevant unit tests with `pnpm test --runTestsByPath <path>`. `pnpm test` runs the full unit suite.
+- End-to-end tests live under `test/` and use `test/jest-e2e.json`. Use `pnpm run test:e2e` for changes that need end-to-end coverage. Use `pnpm run test:cov` to check coverage before PR review. See `jest.config.ts` for the active thresholds.
+- Tests never load real environment files: `AppModule` skips `.env` when `NODE_ENV=test` (Jest sets this), and the end-to-end suite supplies fake values from `test/setup-env.ts` and replaces the database with `test/support/in-memory-prisma.ts`. Keep it that way when adding tests.
+- Use `pnpm run format:check` to check formatting. The lint command is `pnpm run lint` and requires an explicit request.
 
-## Testing Guidelines
+## Commits and pull requests
 
-- Unit and e2e tests use Jest/ts-jest; name files `*.spec.ts`.
-- Coverage thresholds: 85% for branches, functions, lines, statements (see `jest.config.ts`); use `pnpm run test:cov` before PRs.
-- Prefer testing observable behavior over implementation details; mock external calls as needed.
-
-## Commit & Pull Request Guidelines
-
-- Commit messages follow Conventional Commit patterns seen in history (e.g., `feat: ...`, `chore: ...`, `docs: ...`).
-- Keep commits scoped and readable; reference issue/PR numbers when applicable.
-- PRs should include: concise summary, screenshots for UI-affecting changes (if any), testing notes/commands run, and any config or env var impacts.
-- Ensure lint, tests, and coverage pass before requesting review.
-
-## Security & Configuration Tips
-
-- Copy `.env.example` to `.env` for local setup; never commit secrets.
-- Swagger is exposed at `/api`; restrict access or disable in production deployments as needed.
+- Keep commits scoped and use Conventional Commit prefixes such as `feat:`, `chore:`, and `docs:`. Reference relevant issues or PRs when applicable.
+- Include a concise summary, checks run and their results, configuration or environment changes, and screenshots for UI changes.
+- Lint, tests, and coverage are expected to pass before review. Report any checks still pending because of permissions or environment requirements.

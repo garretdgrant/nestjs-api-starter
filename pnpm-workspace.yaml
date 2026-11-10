@@ -1,0 +1,11 @@
+# pnpm settings for this single-package project.
+engineStrict: true
+
+# Dependencies allowed to run install scripts. Prisma needs them to fetch its
+# engines; the others work without theirs.
+allowBuilds:
+  '@parcel/watcher': false
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  prisma: true
+  unrs-resolver: false

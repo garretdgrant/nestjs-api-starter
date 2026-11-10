@@ -1,6 +1,9 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  // Extensionless imports so both tsc (CommonJS output) and Jest resolve them.
+  importFileExtension = ""
 }
 
 datasource db {
@@ -12,83 +15,28 @@ enum Role {
   ADMIN
 }
 
-// --- Agency Staff Role (Internal Role) ---
-enum StaffRole {
-  SUPER_ADMIN // Only you (and future internal staff) use this
-}
-
-enum ProjectStatus {
-  ACTIVE
-  PAUSED
-  ARCHIVED
-}
-
-// --- Client/Company Model ---
-model Client {
-  id        String    @id @default(uuid())
-  name      String    @unique  // name here is the companies name
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  // ONE Client can have MANY Users (Client Users)
-  users     User[]
-
-  // ONE Client can have MANY Projects
-  projects  Project[]
-}
-
-// --- User Model (Handles Both Staff and Client Users) ---
 model User {
-  id                String     @id @default(uuid())
-  email             String     @unique
-  name              String?
-  role              Role       @default(USER)
-
-  // 1. AGENCY STAFF LOGIC (Your Admin View)
-  staffRole         StaffRole?
-
-  // 2. CLIENT USER LOGIC (Client's View)
-  // MANY Users can belong to ONE Client
-  clientId          String? // Foreign Key (Must be String to match Client.id)
-  client            Client?    @relation(fields: [clientId], references: [id])
-
-  // Auth fields
-  hashedPassword    String
-  passwordUpdatedAt DateTime  @default(now())
-  isEmailVerified   Boolean   @default(false)
-
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-
-  refreshTokens     RefreshToken[]
-
-  @@index([clientId])
-}
-
-// --- Project Model ---
-model Project {
-  id          String         @id @default(uuid())
-  name        String
-  status      ProjectStatus  @default(ACTIVE)
-  description String         @default("Website")
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  // Foreign Key linking the Project to a Client
-  clientId    String
-  client      Client         @relation(fields: [clientId], references: [id])
-}
-
-model RefreshToken {
   id           String   @id @default(uuid())
-  tokenHash    String   @unique
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  expiresAt    DateTime
-  revokedAt    DateTime?
-  fingerprint  String?
-  ipAddress    String?
+  email        String   @unique
+  name         String?
+  role         Role     @default(USER)
+  passwordHash String
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+// Opaque refresh tokens. Only the SHA-256 hash is stored; a token is single-use
+// and is marked revoked when it is rotated or the user logs out.
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId])
 }

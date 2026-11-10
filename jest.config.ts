@@ -1,4 +1,4 @@
-import { Config } from 'jest';
+import type { Config } from 'jest';
 
 const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
@@ -7,28 +7,25 @@ const config: Config = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  moduleNameMapper: {
-    '^@src/(.*)$': '<rootDir>/$1',
-    '^@generated/(.*)$': '<rootDir>/../generated/$1',
-  },
+  testEnvironment: 'node',
   collectCoverageFrom: [
-    '**/*.(t|j)s', // Include only TypeScript and JavaScript files
-    '!**/node_modules/**', // Exclude node_modules
-    '!**/dist/**', // Exclude build artifacts
-    '!**/src/main.ts', // Exclude main.ts if coverage for it isn't critical
-    '!**/*.module.ts', // Exclude module files as they are mostly configuration
+    '**/*.ts',
+    '!**/*.spec.ts',
+    '!**/*.module.ts', // wiring only
+    '!main.ts', // bootstrap; covered by running the app
+    '!app.setup.ts', // exercised by the e2e suite
+    '!generated/**', // Prisma client output
+    '!prisma/**', // thin database client wrapper; needs a real database
   ],
   coverageDirectory: '../coverage',
-  testEnvironment: 'node',
-  coveragePathIgnorePatterns: [
-    '/src/main.ts', // Ignore main.ts in coverage
-  ],
   coverageThreshold: {
     global: {
-      branches: 0, // Temporarily lowered for CI bring-up
-      functions: 0,
-      lines: 0,
-      statements: 0,
+      // Lower than the rest: TypeScript's emitted decorator metadata adds
+      // branches that no test can reach.
+      branches: 80,
+      functions: 85,
+      lines: 85,
+      statements: 85,
     },
   },
 };

@@ -1,18 +1,18 @@
-import { Client, Project, User } from '../../generated/prisma/client';
+import type { Request } from 'express';
+import type { Role } from '../generated/prisma/client';
 
+/** Claims carried by the access token. */
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: string;
-  clientId: string | null;
+  role: Role;
 }
 
-export type SafeUser = Omit<User, 'hashedPassword'>;
-export type SafeClient = Client;
-export type SafeProject = Project;
-
-export function toSafeUser(user: User): SafeUser {
-  const { hashedPassword, ...safeUser } = user;
-  void hashedPassword;
-  return safeUser;
+/** The authenticated caller, attached to the request by AuthGuard. */
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: Role;
 }
+
+export type AuthenticatedRequest = Request & { user?: AuthUser };
