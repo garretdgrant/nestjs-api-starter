@@ -31,7 +31,7 @@ sequenceDiagram
     Client->>API: Protected request with Bearer token
     API-->>Client: Response after JWT and role checks
     Client->>API: Refresh with current refresh token
-    API->>DB: Revoke old token; store new token hash
+    API->>DB: Revoke old token and store new token hash
     API-->>Client: Replacement token pair + user
 ```
 
